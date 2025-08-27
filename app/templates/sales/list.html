@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Ventas</h2>
+        <a href="{{ url_for('sales.create_sale') }}" class="btn btn-primary">Nueva Venta</a>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                    <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="{{ request.args.get('fecha_inicio', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                    <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="{{ request.args.get('fecha_fin', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="cliente_id" class="form-label">Cliente</label>
+                    <select id="cliente_id" name="cliente_id" class="form-select">
+                        <option value="">Todos los clientes</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id_cliente }}" {% if request.args.get('cliente_id') == cliente.id_cliente|string %}selected{% endif %}>
+                                {{ cliente.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="vendedor_id" class="form-label">Vendedor</label>
+                    <select id="vendedor_id" name="vendedor_id" class="form-select">
+                        <option value="">Todos los vendedores</option>
+                        {% for vendedor in vendedores %}
+                            <option value="{{ vendedor.id_empleado }}" {% if request.args.get('vendedor_id') == vendedor.id_empleado|string %}selected{% endif %}>
+                                {{ vendedor.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td>{{ venta.id_venta }}</td>
+                        <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ venta.cliente.nombre if venta.cliente else 'N/A' }}</td>
+                        <td>{{ venta.empleado.nombre if venta.empleado else 'N/A' }}</td>
+                        <td>${{ venta.total }}</td>
+                        <td>
+                            <a href="{{ url_for('sales.view_sale', sale_id=venta.id_venta) }}" class="btn btn-sm btn-info">Ver</a>
+                            <a href="{{ url_for('sales.view_invoice', sale_id=venta.id_venta) }}" class="btn btn-sm btn-warning">Factura</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

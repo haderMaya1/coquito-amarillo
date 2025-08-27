@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Ciudades</h2>
+        <a href="{{ url_for('cities.create_city') }}" class="btn btn-primary">Crear Ciudad</a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ciudad in ciudades %}
+                    <tr>
+                        <td>{{ ciudad.id_ciudad }}</td>
+                        <td>{{ ciudad.nombre }}</td>
+                        <td>
+                            <a href="{{ url_for('cities.edit_city', city_id=ciudad.id_ciudad) }}" class="btn btn-sm btn-warning">Editar</a>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ ciudad.id_ciudad }}">Eliminar</button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Modal para eliminar ciudad -->
+                    <div class="modal fade" id="deleteModal{{ ciudad.id_ciudad }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Eliminar Ciudad</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Estás seguro de que deseas eliminar la ciudad "{{ ciudad.nombre }}"?</p>
+                                    <p class="text-danger">Esta acción no se puede deshacer.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ url_for('cities.delete_city', city_id=ciudad.id_ciudad) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

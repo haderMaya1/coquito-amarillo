@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Clientes</h2>
+        <div>
+            <a href="{{ url_for('clients.create_client') }}" class="btn btn-primary">Crear Cliente</a>
+            {% if current_user.rol.nombre == 'Administrador' %}
+                <a href="{{ url_for('clients.list_clients', mostrar_inactivos=not mostrar_inactivos) }}" 
+                   class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
+                    {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th>Ciudad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr class="{% if not client.activo %}table-secondary{% endif %}">
+                        <td>{{ client.id_cliente }}</td>
+                        <td>{{ client.nombre }}</td>
+                        <td>{{ client.direccion | truncate(30) }}</td>
+                        <td>{{ client.telefono }}</td>
+                        <td>{{ client.ciudad.nombre if client.ciudad else 'N/A' }}</td>
+                        <td>
+                            <span class="badge {% if client.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if client.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('clients.view_client', client_id=client.id_cliente) }}" class="btn btn-sm btn-info">Detalles</a>
+                            {% if client.activo %}
+                                <a href="{{ url_for('clients.edit_client', client_id=client.id_cliente) }}" class="btn btn-sm btn-warning">Editar</a>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ client.id_cliente }}">Desactivar</button>
+                            {% else %}
+                                <form action="{{ url_for('clients.activate_client', client_id=client.id_cliente) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">Activar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Modal para desactivar cliente -->
+                    <div class="modal fade" id="deleteModal{{ client.id_cliente }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Desactivar Cliente</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Estás seguro de que deseas desactivar al cliente "{{ client.nombre }}"?</p>
+                                    <p class="text-warning">El cliente no se eliminará permanentemente, pero ya no estará disponible para nuevas ventas.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ url_for('clients.delete_client', client_id=client.id_cliente) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Desactivar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

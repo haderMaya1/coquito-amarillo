@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Crear Nuevo Cliente</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('clients.create_client') }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" id="nombre" name="nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <textarea id="direccion" name="direccion" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono *</label>
+                            <input type="text" id="telefono" name="telefono" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ciudad_id" class="form-label">Ciudad</label>
+                            <select id="ciudad_id" name="ciudad_id" class="form-select">
+                                <option value="">Seleccionar ciudad</option>
+                                {% for ciudad in ciudades %}
+                                    <option value="{{ ciudad.id_ciudad }}">{{ ciudad.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Crear</button>
+                        <a href="{{ url_for('clients.list_clients') }}" class="btn btn-secondary">Cancelar</a>
+                    </form>
+                </div>
+            </div>
+</div>
+{% endblock %}

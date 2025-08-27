@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Nueva Venta</h3>
+                </div>
+                <div class="card-body">
+                    <form id="sale-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cliente_id" class="form-label">Cliente *</label>
+                                    <select id="cliente_id" name="cliente_id" class="form-select" required>
+                                        <option value="">Seleccionar cliente</option>
+                                        {% for cliente in clientes %}
+                                            <option value="{{ cliente.id_cliente }}">{{ cliente.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4 class="mt-4">Productos</h4>
+                        <div id="productos-container">
+                            <div class="row producto-row mb-2">
+                                <div class="col-md-5">
+                                    <select class="form-select producto-select" required>
+                                        <option value="">Seleccionar producto</option>
+                                        {% for producto in productos %}
+                                            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}">
+                                                {{ producto.nombre }} - ${{ producto.precio }} (Stock: {{ producto.stock }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" class="form-control cantidad-input" min="1" value="1" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" class="form-control precio-input" readonly>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" class="form-control subtotal-input" readonly placeholder="Subtotal">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger remove-product">X</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-product" class="btn btn-secondary mt-3">Añadir Producto</button>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <h4>Total: $<span id="total-venta">0.00</span></h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="button" id="submit-sale" class="btn btn-primary">Registrar Venta</button>
+                            <a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para calcular subtotales y total
+    function calcularTotales() {
+        let total = 0;
+        document.querySelectorAll('.producto-row').forEach(row => {
+            const select = row.querySelector('.producto-select');
+            const cantidadInput = row.querySelector('.cantidad-input');
+            const precioInput = row.querySelector('.precio-input');
+            const subtotalInput = row.querySelector('.subtotal-input');
+            
+            if (select.value && cantidadInput.value) {
+                const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
+                const cantidad = parseInt(cantidadInput.value);
+                const subtotal = precio * cantidad;
+                
+                precioInput.value = precio.toFixed(2);
+                subtotalInput.value = subtotal.toFixed(2);
+                total += subtotal;
+            } else {
+                precioInput.value = '';
+                subtotalInput.value = '';
+            }
+        });
+        
+        document.getElementById('total-venta').textContent = total.toFixed(2);
+    }
+    
+    // Añadir producto
+    document.getElementById('add-product').addEventListener('click', function() {
+        const newRow = document.querySelector('.producto-row').cloneNode(true);
+        newRow.querySelector('.producto-select').value = '';
+        newRow.querySelector('.cantidad-input').value = 1;
+        newRow.querySelector('.precio-input').value = '';
+        newRow.querySelector('.subtotal-input').value = '';
+        newRow.querySelector('.remove-product').addEventListener('click', function() {
+            this.closest('.producto-row').remove();
+            calcularTotales();
+        });
+        
+        document.getElementById('productos-container').appendChild(newRow);
+        
+        // Agregar event listeners al nuevo row
+        newRow.querySelector('.producto-select').addEventListener('change', calcularTotales);
+        newRow.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
+    });
+    
+    // Event listeners para el primer row
+    document.querySelector('.producto-select').addEventListener('change', calcularTotales);
+    document.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
+    document.querySelector('.remove-product').addEventListener('click', function() {
+        if (document.querySelectorAll('.producto-row').length > 1) {
+            this.closest('.producto-row').remove();
+            calcularTotales();
+        }
+    });
+    
+    // Enviar venta
+    document.getElementById('submit-sale').addEventListener('click', function() {
+        const clienteId = document.getElementById('cliente_id').value;
+        const productos = [];
+        
+        let hasProducts = false;
+        document.querySelectorAll('.producto-row').forEach(row => {
+            const select = row.querySelector('.producto-select');
+            const cantidadInput = row.querySelector('.cantidad-input');
+            
+            if (select.value && cantidadInput.value) {
+                productos.push({
+                    producto_id: parseInt(select.value),
+                    cantidad: parseInt(cantidadInput.value)
+                });
+                hasProducts = true;
+            }
+        });
+        
+        if (!clienteId) {
+            alert('Debe seleccionar un cliente');
+            return;
+        }
+        
+        if (!hasProducts) {
+            alert('Debe añadir al menos un producto a la venta');
+            return;
+        }
+        
+        const data = {
+            cliente_id: parseInt(clienteId),
+            productos: productos
+        };
+        
+        fetch('{{ url_for("sales.create_sale") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '{{ url_for("sales.list_sales") }}';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al registrar la venta');
+        });
+    });
+});
+</script>
+{% endblock %}

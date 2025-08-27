@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Detalles de Producto{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="bi bi-box-seam"></i> {{ product.nombre }}
+                    <span class="badge {% if product.activo %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                        {% if product.activo %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Información del Producto</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>ID:</th>
+                                <td>{{ product.id_producto }}</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre:</th>
+                                <td>{{ product.nombre }}</td>
+                            </tr>
+                            <tr>
+                                <th>Descripción:</th>
+                                <td>{{ product.descripcion or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Precio:</th>
+                                <td>${{ product.precio }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Inventario y Proveedor</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Stock:</th>
+                                <td>
+                                    <span class="badge {% if product.stock > 10 %}bg-success{% elif product.stock > 0 %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                                        {{ product.stock }} unidades
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Proveedor:</th>
+                                <td>{{ product.proveedor.nombre if product.proveedor else 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Contacto:</th>
+                                <td>{{ product.proveedor.contacto if product.proveedor and product.proveedor.contacto else 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Estado:</th>
+                                <td>
+                                    <span class="badge {% if product.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if product.activo %}Activo{% else %}Inactivo{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if not product.activo %}
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i> Este producto está desactivado y no está disponible para ventas.
+                </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    {% if current_user.rol.nombre == 'Administrador' %}
+                    <a href="{{ url_for('products.edit_product', product_id=product.id_producto) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    
+                    {% if product.activo %}
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i> Desactivar
+                    </button>
+                    {% else %}
+                    <form action="{{ url_for('products.activate_product', product_id=product.id_producto) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Activar
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                    
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#stockModal">
+                        <i class="bi bi-plus-slash-minus"></i> Ajustar Stock
+                    </button>
+                    
+                    <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Información adicional o estadísticas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stockModal">
+                        <i class="bi bi-plus-circle"></i> Añadir Stock
+                    </button>
+                    {% if current_user.rol.nombre == 'Administrador' %}
+                    <a href="{{ url_for('products.edit_product', product_id=product.id_producto) }}" class="btn btn-outline-warning">
+                        <i class="bi bi-pencil"></i> Editar Producto
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historial de movimientos (futura implementación) -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Historial Reciente</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">El historial de movimientos se mostrará aquí en futuras versiones.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para desactivar producto -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Desactivar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas desactivar el producto <strong>"{{ product.nombre }}"</strong>?</p>
+                <p class="text-warning">El producto no se eliminará permanentemente, pero ya no estará disponible para ventas.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('products.delete_product', product_id=product.id_producto) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Desactivar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ajustar stock -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajustar Stock - {{ product.nombre }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('products.update_stock', product_id=product.id_producto) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Acción</label>
+                        <select name="accion" class="form-select" required>
+                            <option value="aumentar">Aumentar</option>
+                            <option value="reducir">Reducir</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Stock actual: <strong>{{ product.stock }}</strong> unidades
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Aplicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

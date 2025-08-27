@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Crear Nueva Ciudad</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('cities.create_city') }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre de la Ciudad *</label>
+                            <input type="text" id="nombre" name="nombre" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Crear</button>
+                        <a href="{{ url_for('cities.list_cities') }}" class="btn btn-secondary">Cancelar</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

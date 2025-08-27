@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+        <div>
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Crear Usuario</a>
+            <a href="{{ url_for('admin.manage_users', mostrar_inactivos=not mostrar_inactivos) }}" 
+               class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
+                {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="{% if not user.activo %}table-secondary{% endif %}">
+                        <td>{{ user.id_usuario }}</td>
+                        <td>{{ user.nombre }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.rol.nombre }}</td>
+                        <td>
+                            <span class="badge {% if user.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if user.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.activo %}
+                                <a href="{{ url_for('admin.edit_user', user_id=user.id_usuario) }}" class="btn btn-sm btn-warning">Editar</a>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id_usuario }}">Desactivar</button>
+                            {% else %}
+                                <form action="{{ url_for('admin.activate_user', user_id=user.id_usuario) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">Activar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Modal para desactivar usuario -->
+                    <div class="modal fade" id="deleteModal{{ user.id_usuario }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Desactivar Usuario</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Estás seguro de que deseas desactivar al usuario "{{ user.nombre }}"?</p>
+                                    <p class="text-warning">El usuario no podrá iniciar sesión pero sus datos se mantendrán.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ url_for('admin.delete_user', user_id=user.id_usuario) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Desactivar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

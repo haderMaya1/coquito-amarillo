@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Detalles del Cliente</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">ID:</div>
+                        <div class="col-sm-8">{{ client.id_cliente }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Nombre:</div>
+                        <div class="col-sm-8">{{ client.nombre }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Dirección:</div>
+                        <div class="col-sm-8">{{ client.direccion }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Teléfono:</div>
+                        <div class="col-sm-8">{{ client.telefono }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Ciudad:</div>
+                        <div class="col-sm-8">{{ client.ciudad.nombre if client.ciudad else 'N/A' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Estado:</div>
+                        <div class="col-sm-8">
+                            <span class="badge {% if client.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if client.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% if not client.activo %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Desactivado el:</div>
+                        <div class="col-sm-8">{{ client.fecha_eliminacion.strftime('%d/%m/%Y %H:%M') if client.fecha_eliminacion else 'N/A' }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-sm-8 offset-sm-4">
+                            {% if client.activo %}
+                                <a href="{{ url_for('clients.edit_client', client_id=client.id_cliente) }}" class="btn btn-warning">Editar</a>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    Desactivar
+                                </button>
+                            {% else %}
+                                <form action="{{ url_for('clients.activate_client', client_id=client.id_cliente) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ url_for('clients.list_clients') }}" class="btn btn-secondary">Volver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Historial de Compras (a implementar luego) -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Historial de Compras</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">El historial de compras se mostrará aquí cuando se implemente el módulo de ventas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Desactivación -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Desactivación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas desactivar al cliente "{{ client.nombre }}"?</p>
+                <p class="text-warning">El cliente no podrá ser seleccionado en nuevas ventas, pero sus datos se mantendrán.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('clients.delete_client', client_id=client.id_cliente) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Desactivar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
