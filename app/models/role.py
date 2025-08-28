@@ -14,12 +14,7 @@ class Role(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)
 
     # Relaciones (sin delete-orphan para NO borrar usuarios al tocar roles)
-    usuarios = relationship(
-        'User',
-        back_populates='rol',
-        cascade='save-update, merge'
-        # considera passive_deletes=True si defines ON DELETE en FK
-    )
+    usuarios = relationship('User', back_populates='rol',cascade='save-update, merge')
 
     def get_id(self):
         return str(self.id_rol)
