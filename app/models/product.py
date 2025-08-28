@@ -81,8 +81,8 @@ class Product(db.Model):
         if descripcion == '':
             return None
         # Texto con puntuación básica
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ.,:;()\-#]+$', descripcion):
-            raise ValueError('La descripción contiene caracteres no permitidos')
+        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ.,:;()!?¿¡%&$#@*+\-/\'"–—]+$', descripcion):
+            raise ValueError('La descripción contiene caracteres no permitidos. Solo se permiten letras, números, espacios y signos de puntuación comunes.')
         # Límite lógico acorde a la columna
         if len(descripcion) > 150:
             raise ValueError('La descripción no puede exceder 150 caracteres')
@@ -102,3 +102,4 @@ class Product(db.Model):
     
     def __repr__(self):
         return f'<Producto {self.nombre}>'
+    

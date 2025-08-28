@@ -141,8 +141,6 @@ def view_client(client_id):
     # Aquí luego agregaremos el historial de compras
     return render_template('clients/detail.html', client=client)
 
-clients_bp = Blueprint('clients', __name__)
-
 # Listar órdenes de un cliente
 @clients_bp.route('/<int:client_id>/orders')
 @login_required

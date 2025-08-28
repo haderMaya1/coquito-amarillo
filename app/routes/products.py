@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Product, Supplier, Invoice
+from app.models import Product, Supplier, Invoice, Sale
 from sqlalchemy.exc import IntegrityError
-from forms import ProductForm, ConfirmDeleteForm, StockForm, InvoiceForm
+from app.forms import ProductForm, ConfirmDeleteForm, StockForm, InvoiceForm, SaleForm
 from app.utils.security import sanitize_form_data
 from app.utils.decorators import admin_required, seller_required
 
@@ -190,56 +190,3 @@ def api_inventory():
         'precio': float(p.precio),
         'activo': p.activo
     } for p in productos])
-    
-sales_bp = Blueprint('sales', __name__)
-
-# ... aquí van las rutas de ventas previas ...
-
-
-# 🔹 API detalle de producto
-@sales_bp.route('/api/product/<int:product_id>')
-@login_required
-def api_product_detail(product_id):
-    producto = Product.query.get_or_404(product_id)
-    return jsonify({
-        'id': producto.id_producto,
-        'nombre': producto.nombre,
-        'precio': float(producto.precio),
-        'stock': producto.stock
-    })
-
-
-# 🔹 Crear factura manualmente para una venta existente
-@sales_bp.route('/<int:sale_id>/invoice/create', methods=['GET', 'POST'])
-@login_required
-def create_invoice(sale_id):
-    venta = Sale.query.get_or_404(sale_id)
-    form = InvoiceForm()
-
-    if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
-
-        # Verificar si ya existe factura
-        if venta.factura:
-            flash('Ya existe una factura para esta venta', 'warning')
-            return redirect(url_for('sales.view_invoice', sale_id=venta.id_venta))
-
-        nueva_factura = Invoice(
-            venta_id=venta.id_venta,
-            total=data.get('total', venta.total)
-        )
-        db.session.add(nueva_factura)
-        db.session.commit()
-
-        flash('Factura creada correctamente', 'success')
-        return redirect(url_for('sales.view_invoice', sale_id=venta.id_venta))
-
-    return render_template('sales/create_invoice.html', form=form, venta=venta)
-
-
-# 🔹 Ver factura de una venta
-@sales_bp.route('/<int:sale_id>/invoice')
-@login_required
-def view_invoice(sale_id):
-    venta = Sale.query.get_or_404(sale_id)
-    return render_template('sales/invoice.html', venta=venta, factura=venta.factura)

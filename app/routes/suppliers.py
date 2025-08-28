@@ -1,14 +1,16 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
-from app.models import Supplier, City, SupplierOrder, Product, SupplierOrderProduct
-from app.forms import SupplierForm, SupplierOrderForm, SupplierOrderProductForm
-from app.utils.decorators import admin_required, supplier_required
+from app.models import City, Supplier, SupplierOrder, Product, SupplierOrderProduct
+from app.forms import SupplierForm, SupplierOrderForm
+from app.utils.decorators import admin_required
 from app.utils.security import sanitize_form_data, sanitize_input
 
-suppliers_bp = Blueprint('suppliers', __name__)
 
-# ===== PROVEEDORES =====
+suppliers_bp = Blueprint('suppliers', __name__, url_prefix='/suppliers')
+
+# ===== RUTAS PARA SUPPLIERS (PROVEEDORES) =====
+
 @suppliers_bp.route('/')
 @login_required
 def list_suppliers():
@@ -30,12 +32,12 @@ def list_suppliers():
 def create_supplier():
     form = SupplierForm()
     
-    # Cargar opciones de ciudades
+    # Cargar opciones para el campo de ciudad
     form.ciudad_id.choices = [(c.id_ciudad, c.nombre) for c in City.query.all()]
-    
+
     if form.validate_on_submit():
         try:
-            # Sanitizar datos del formulario
+            # Sanitizar los datos del formulario
             sanitized_data = sanitize_form_data(form.data)
             
             nuevo_proveedor = Supplier(
@@ -63,12 +65,12 @@ def edit_supplier(supplier_id):
     proveedor = Supplier.query.get_or_404(supplier_id)
     form = SupplierForm(obj=proveedor)
     
-    # Cargar opciones de ciudades
+    # Cargar opciones para el campo de ciudad
     form.ciudad_id.choices = [(c.id_ciudad, c.nombre) for c in City.query.all()]
-    
+
     if form.validate_on_submit():
         try:
-            # Sanitizar datos del formulario
+            # Sanitizar los datos del formulario
             sanitized_data = sanitize_form_data(form.data)
             
             proveedor.nombre = sanitized_data['nombre']
@@ -91,8 +93,12 @@ def edit_supplier(supplier_id):
 def delete_supplier(supplier_id):
     proveedor = Supplier.query.get_or_404(supplier_id)
     
-    proveedor.desactivar()
-    flash('Proveedor desactivado exitosamente', 'success')
+    try:
+        proveedor.desactivar()
+        flash('Proveedor desactivado exitosamente', 'success')
+    except Exception as e:
+        flash(f'Error al desactivar proveedor: {str(e)}', 'error')
+    
     return redirect(url_for('suppliers.list_suppliers'))
 
 @suppliers_bp.route('/<int:supplier_id>/activate', methods=['POST'])
@@ -101,8 +107,12 @@ def delete_supplier(supplier_id):
 def activate_supplier(supplier_id):
     proveedor = Supplier.query.get_or_404(supplier_id)
     
-    proveedor.activar()
-    flash('Proveedor reactivado exitosamente', 'success')
+    try:
+        proveedor.activar()
+        flash('Proveedor reactivado exitosamente', 'success')
+    except Exception as e:
+        flash(f'Error al reactivar proveedor: {str(e)}', 'error')
+    
     return redirect(url_for('suppliers.list_suppliers'))
 
 @suppliers_bp.route('/<int:supplier_id>')
@@ -119,7 +129,7 @@ def view_supplier(supplier_id):
     
     return render_template('suppliers/detail.html', proveedor=proveedor)
 
-# ===== ÓRDENES DE PROVEEDOR =====
+# Gestión de Órdenes de Proveedor
 @suppliers_bp.route('/orders')
 @login_required
 def list_orders():
@@ -136,19 +146,14 @@ def list_orders():
 def create_order():
     form = SupplierOrderForm()
     
-    # Cargar opciones de proveedores
-    form.proveedor_id.choices = [(s.id_proveedor, s.nombre) for s in Supplier.get_activos().all()]
-    
+    # Cargar opciones para el campo de proveedor
+    form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.get_activos().all()]
+
     if form.validate_on_submit():
         try:
-            # Sanitizar datos del formulario
+            # Sanitizar los datos del formulario
             sanitized_data = sanitize_form_data(form.data)
             proveedor_id = sanitized_data['proveedor_id']
-            
-            # Crear la orden
-            nueva_orden = SupplierOrder(proveedor_id=proveedor_id)
-            db.session.add(nueva_orden)
-            db.session.flush()  # Para obtener el ID de la orden
             
             # Procesar productos (si se enviaron)
             productos = request.form.getlist('productos[]')
@@ -157,6 +162,11 @@ def create_order():
             if not productos or not cantidades:
                 flash('Debe agregar al menos un producto a la orden', 'error')
                 return render_template('suppliers/orders/create.html', form=form, productos=Product.get_activos().all())
+            
+            # Crear la orden
+            nueva_orden = SupplierOrder(proveedor_id=proveedor_id)
+            db.session.add(nueva_orden)
+            db.session.flush()  # Para obtener el ID de la orden
             
             for i in range(len(productos)):
                 producto_id = sanitize_input(productos[i])
@@ -246,110 +256,3 @@ def view_order(order_id):
         return redirect(url_for('suppliers.list_orders'))
     
     return render_template('suppliers/orders/detail.html', orden=orden)
-
-# ===== PRODUCTOS EN ÓRDENES DE PROVEEDOR =====
-@suppliers_bp.route('/orders/<int:order_id>/products/add', methods=['POST'])
-@login_required
-@admin_required
-def add_product_to_order(order_id):
-    form = SupplierOrderProductForm()
-    
-    # Cargar opciones de productos
-    form.id_producto.choices = [(p.id_producto, p.nombre) for p in Product.get_activos().all()]
-    
-    if form.validate_on_submit():
-        try:
-            # Sanitizar datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            
-            # Verificar que la orden existe
-            orden = SupplierOrder.query.get_or_404(order_id)
-            
-            # Verificar que el producto no está ya en la orden
-            existing_product = SupplierOrderProduct.query.filter_by(
-                id_orden_proveedor=order_id,
-                id_producto=sanitized_data['id_producto']
-            ).first()
-            
-            if existing_product:
-                flash('Este producto ya está en la orden', 'error')
-                return redirect(url_for('suppliers.view_order', order_id=order_id))
-            
-            # Agregar producto a la orden
-            orden_producto = SupplierOrderProduct(
-                id_orden_proveedor=order_id,
-                id_producto=sanitized_data['id_producto'],
-                cantidad=sanitized_data['cantidad']
-            )
-            
-            db.session.add(orden_producto)
-            db.session.commit()
-            
-            flash('Producto agregado a la orden exitosamente', 'success')
-            return redirect(url_for('suppliers.view_order', order_id=order_id))
-        
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al agregar producto a la orden: {str(e)}', 'error')
-    
-    return redirect(url_for('suppliers.view_order', order_id=order_id))
-
-@suppliers_bp.route('/orders/<int:order_id>/products/<int:product_id>/remove', methods=['POST'])
-@login_required
-@admin_required
-def remove_product_from_order(order_id, product_id):
-    try:
-        # Verificar que la orden existe
-        orden = SupplierOrder.query.get_or_404(order_id)
-        
-        # Buscar el producto en la orden
-        orden_producto = SupplierOrderProduct.query.filter_by(
-            id_orden_proveedor=order_id,
-            id_producto=product_id
-        ).first_or_404()
-        
-        # Eliminar el producto de la orden
-        db.session.delete(orden_producto)
-        db.session.commit()
-        
-        flash('Producto eliminado de la orden exitosamente', 'success')
-        return redirect(url_for('suppliers.view_order', order_id=order_id))
-    
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error al eliminar producto de la orden: {str(e)}', 'error')
-        return redirect(url_for('suppliers.view_order', order_id=order_id))
-
-@suppliers_bp.route('/orders/<int:order_id>/products/<int:product_id>/update', methods=['POST'])
-@login_required
-@admin_required
-def update_product_in_order(order_id, product_id):
-    try:
-        # Verificar que la orden existe
-        orden = SupplierOrder.query.get_or_404(order_id)
-        
-        # Buscar el producto en la orden
-        orden_producto = SupplierOrderProduct.query.filter_by(
-            id_orden_proveedor=order_id,
-            id_producto=product_id
-        ).first_or_404()
-        
-        # Obtener y validar la nueva cantidad
-        nueva_cantidad = request.form.get('cantidad')
-        nueva_cantidad = sanitize_input(nueva_cantidad) if nueva_cantidad else None
-        
-        if not nueva_cantidad or not nueva_cantidad.isdigit() or int(nueva_cantidad) <= 0:
-            flash('Cantidad inválida', 'error')
-            return redirect(url_for('suppliers.view_order', order_id=order_id))
-        
-        # Actualizar la cantidad
-        orden_producto.cantidad = int(nueva_cantidad)
-        db.session.commit()
-        
-        flash('Cantidad actualizada exitosamente', 'success')
-        return redirect(url_for('suppliers.view_order', order_id=order_id))
-    
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error al actualizar cantidad: {str(e)}', 'error')
-        return redirect(url_for('suppliers.view_order', order_id=order_id))

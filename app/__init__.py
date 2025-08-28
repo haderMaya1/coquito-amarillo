@@ -22,31 +22,12 @@ def load_user(user_id):
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    csrf = CSRFProtect(app)
     
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
-    
-    from app.routes.auth import auth_bp
-    from app.routes.dashboard import dashboard_bp
-    from app.routes.admin import admin_bp
-    from app.routes.products import products_bp
-    from app.routes.clients import clients_bp
-    from app.routes.sales import sales_bp
-    from app.routes.suppliers import suppliers_bp
-    from app.routes.staff import staff_bp
-    from app.routes.cities import cities_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(products_bp, url_prefix='/products')
-    app.register_blueprint(clients_bp, url_prefix='/clients')
-    app.register_blueprint(sales_bp, url_prefix='/sales')
-    app.register_blueprint(suppliers_bp, url_prefix='/suppliers')
-    app.register_blueprint(staff_bp, url_prefix='/staff')
-    app.register_blueprint(cities_bp, url_prefix='/cities')
     
     # En create_app, después de inicializar la base de datos
     with app.app_context():
@@ -59,9 +40,29 @@ def create_app(config_name='default'):
             init_db()
             
     # ... después de crear la app
-    app.config['SECRET_KEY'] = 'tu-clave-secreta-aqui'  # Debe ser una clave segura
-    app.config['WTF_CSRF_SECRET_KEY'] = 'otra-clave-secreta-csrf'  # Para protección CSRF
-
-    csrf = CSRFProtect(app)
+    app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']  # Para protección CSRF
+    
+    
+    from app.routes.auth import auth_bp #
+    from app.routes.dashboard import dashboard_bp #
+    from app.routes.admin import admin_bp #
+    from app.routes.products import products_bp#
+    from app.routes.clients import clients_bp #
+    from app.routes.sales import sales_bp #
+    from app.routes.store import store_bp #
+    from app.routes.suppliers import suppliers_bp #
+    from app.routes.staff import staff_bp
+    from app.routes.cities import cities_bp #
+    
+    app.register_blueprint(auth_bp, url_prefix='/')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')#
+    app.register_blueprint(admin_bp, url_prefix='/admin') #
+    app.register_blueprint(products_bp, url_prefix='/products') #
+    app.register_blueprint(clients_bp, url_prefix='/clients') #
+    app.register_blueprint(sales_bp, url_prefix='/sales') #
+    app.register_blueprint(suppliers_bp, url_prefix='/suppliers')
+    app.register_blueprint(store_bp, url_prefix='/store') #
+    app.register_blueprint(staff_bp, url_prefix='/staff')
+    app.register_blueprint(cities_bp, url_prefix='/cities') #
         
     return app

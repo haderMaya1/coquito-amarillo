@@ -125,8 +125,6 @@ def create_sale():
     productos = Product.get_activos().filter(Product.stock > 0).all()
     return render_template('sales/create.html', form=form, clientes=clientes, productos=productos)
 
-
-# --------- Agregar productos a una venta existente ---------
 @sales_bp.route('/<int:sale_id>/add_product', methods=['GET', 'POST'])
 @login_required
 @seller_required
@@ -156,16 +154,16 @@ def add_product_to_sale(sale_id):
         )
         db.session.add(venta_producto)
 
+        # Actualizamos stock y totales
         producto.stock -= data['cantidad']
         venta.total += subtotal
-        venta.factura.total = venta.total
+        venta.factura.total = venta.total  # sincronizamos la factura
 
         db.session.commit()
         flash('Producto agregado correctamente a la venta', 'success')
         return redirect(url_for('sales.view_sale', sale_id=sale_id))
 
     return render_template('sales/add_product.html', form=form, venta=venta)
-
 
 # --------- Ver venta ---------
 @sales_bp.route('/<int:sale_id>')
@@ -212,8 +210,9 @@ def view_invoice(sale_id):
     venta = Sale.query.get_or_404(sale_id)
     return render_template('sales/invoice.html', venta=venta, factura=venta.factura)
 
-
-# --------- API detalle producto ---------
+#Another config for sales:
+# ... aquí van las rutas de ventas previas ...
+# 🔹 API detalle de producto
 @sales_bp.route('/api/product/<int:product_id>')
 @login_required
 def api_product_detail(product_id):
@@ -224,43 +223,3 @@ def api_product_detail(product_id):
         'precio': float(producto.precio),
         'stock': producto.stock
     })
-    
-@sales_bp.route('/<int:sale_id>/add_product', methods=['GET', 'POST'])
-@login_required
-@seller_required
-def add_product_to_sale(sale_id):
-    venta = Sale.query.get_or_404(sale_id)
-    form = SaleProductForm()
-
-    if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
-
-        producto = Product.query.get(data['id_producto'])
-        if not producto:
-            flash('Producto no encontrado', 'danger')
-            return redirect(url_for('sales.view_sale', sale_id=sale_id))
-
-        if producto.stock < data['cantidad']:
-            flash(f'Stock insuficiente para {producto.nombre}', 'danger')
-            return redirect(url_for('sales.view_sale', sale_id=sale_id))
-
-        subtotal = producto.precio * data['cantidad']
-
-        venta_producto = SaleProduct(
-            id_venta=venta.id_venta,
-            id_producto=producto.id_producto,
-            cantidad=data['cantidad'],
-            subtotal=subtotal
-        )
-        db.session.add(venta_producto)
-
-        # Actualizamos stock y totales
-        producto.stock -= data['cantidad']
-        venta.total += subtotal
-        venta.factura.total = venta.total  # sincronizamos la factura
-
-        db.session.commit()
-        flash('Producto agregado correctamente a la venta', 'success')
-        return redirect(url_for('sales.view_sale', sale_id=sale_id))
-
-    return render_template('sales/add_product.html', form=form, venta=venta)

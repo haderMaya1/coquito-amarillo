@@ -14,8 +14,6 @@ class Config:
     instance_dir = os.path.join(basedir, 'instance')
     db_path = os.path.join(instance_dir, 'database.db')
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.abspath(db_path)}'
-    # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-    #     'sqlite:///' + os.path.join(instance_dir , 'database.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class DevelopmentConfig(Config):

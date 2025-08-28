@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, EmailField, DecimalField, IntegerField, DateTimeField, BooleanField, SelectField, SubmitField, RadioField
+from wtforms import StringField, PasswordField, EmailField, DecimalField, IntegerField, DateTimeField, BooleanField, SelectField, SubmitField, RadioField, DateField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, EqualTo
 from wtforms import ValidationError
 from datetime import datetime
@@ -63,7 +63,7 @@ class RolForm(BaseForm):
     ])
     
     descripcion = StringField('Descripcion', validators=[
-        Optional("Describe el rol"),
+        Optional(),
         Length(min=2, max=150, message='Debe tener entre 2 a 150 caracteres')
     ])
     
@@ -79,7 +79,7 @@ class ProductForm(BaseForm):
     ])
     
     descripcion = StringField('Descripcion', validators=[
-        Optional("Describe el rol"),
+        Optional(),
         Length(min=2, max=150, message='Debe tener entre 2 a 150 caracteres')
     ])
     
@@ -126,7 +126,7 @@ class ClienteForm(FlaskForm):
     ])
     
     direccion = StringField('Direccion', validators=[
-        Optional(message='Por favor ingrese una dirección'),
+        Optional(),
         Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
     ])
     
@@ -334,3 +334,139 @@ class SupplierOrderProductForm(FlaskForm):
     ])
     
     submit = SubmitField('Agregar Producto')
+
+#-------------Personal----------------
+class StaffForm(FlaskForm):
+    nombre = StringField('Nombre', validators=[
+        DataRequired(message='El nombre es requerido'),
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+    ])
+    cargo = StringField('Cargo', validators=[
+        Optional(),
+        Length(max=100, message='No puede exceder 100 caracteres')
+    ])
+    salario = DecimalField('Salario', validators=[
+        Optional(),
+        NumberRange(min=0, message='El salario no puede ser negativo')
+    ])
+    ciudad_id = SelectField('Ciudad', coerce=int, validators=[
+        DataRequired(message='La ciudad es requerida')
+    ])
+    tienda_id = SelectField('Tienda', coerce=int, validators=[
+        Optional()
+    ])
+    usuario_id = SelectField('Usuario', coerce=int, validators=[
+        Optional()
+    ])
+    proveedor_id = SelectField('Proveedor', coerce=int, validators=[
+        Optional()
+    ])
+
+#------------Tienda----------------
+class StoreForm(FlaskForm):
+    nombre = StringField('Nombre', validators=[
+        DataRequired(message='El nombre es requerido'),
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+    ])
+    direccion = StringField('Dirección', validators=[
+        Optional(),
+        Length(max=150, message='No puede exceder 150 caracteres')
+    ])
+    ciudad_id = SelectField('Ciudad', coerce=int, validators=[
+        DataRequired(message='La ciudad es requerida')
+    ])
+
+#--------------Login---------------------
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[
+        DataRequired(message='El email es requerido'),
+        Email(message='Debe ser un email válido')
+    ])
+    password = PasswordField('Contraseña', validators=[
+        DataRequired(message='La contraseña es requerida')
+    ])
+
+#----------------Registro-----------------
+class RegisterForm(FlaskForm):
+    nombre = StringField('Nombre', validators=[
+        DataRequired(message='El nombre es requerido'),
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(message='El email es requerido'),
+        Email(message='Debe ser un email válido')
+    ])
+    password = PasswordField('Contraseña', validators=[
+        DataRequired(message='La contraseña es requerida'),
+        Length(min=8, message='Debe tener al menos 8 caracteres')
+    ])
+    confirm_password = PasswordField('Confirmar Contraseña', validators=[
+        DataRequired(message='Debe confirmar la contraseña'),
+        EqualTo('password', message='Las contraseñas no coinciden')
+    ])
+    rol_id = SelectField('Rol', coerce=int, validators=[
+        DataRequired(message='El rol es requerido')
+    ])
+
+#-----------Cambiar Contraseña-------------
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Contraseña Actual', validators=[
+        DataRequired(message='La contraseña actual es requerida')
+    ])
+    new_password = PasswordField('Nueva Contraseña', validators=[
+        DataRequired(message='La nueva contraseña es requerida'),
+        Length(min=8, message='Debe tener al menos 8 caracteres')
+    ])
+    confirm_password = PasswordField('Confirmar Nueva Contraseña', validators=[
+        DataRequired(message='Debe confirmar la nueva contraseña'),
+        EqualTo('new_password', message='Las contraseñas no coinciden')
+    ])
+    
+# ... (otros formularios existentes)
+class ProfileForm(FlaskForm):
+    nombre = StringField('Nombre', validators=[
+        DataRequired(message='El nombre es requerido'),
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(message='El email es requerido'),
+        Email(message='Debe ser un email válido')
+    ])
+
+class DateRangeForm(FlaskForm):
+    """Formulario para seleccionar un rango de fechas."""
+    start_date = DateField('Fecha de inicio', validators=[Optional()])
+    end_date = DateField('Fecha de fin', validators=[Optional()])
+    submit = SubmitField('Filtrar')
+
+class SalesFilterForm(FlaskForm):
+    """Formulario para filtrar y agrupar ventas."""
+    start_date = DateField('Fecha de inicio', validators=[Optional()])
+    end_date = DateField('Fecha de fin', validators=[Optional()])
+    group_by = SelectField(
+        'Agrupar por',
+        choices=[
+            ('day', 'Día'),
+            ('week', 'Semana'),
+            ('month', 'Mes')
+        ],
+        default='day',
+        validators=[DataRequired()]
+    )
+    submit = SubmitField('Aplicar Filtro')
+
+class QuickStatsForm(FlaskForm):
+    """Formulario para seleccionar períodos rápidos de estadísticas."""
+    period = SelectField(
+        'Seleccionar Período',
+        choices=[
+            ('today', 'Hoy'),
+            ('last_7_days', 'Últimos 7 días'),
+            ('last_30_days', 'Últimos 30 días'),
+            ('this_month', 'Este mes'),
+            ('this_year', 'Este año')
+        ],
+        default='last_7_days',
+        validators=[DataRequired()]
+    )
+    submit = SubmitField('Actualizar')

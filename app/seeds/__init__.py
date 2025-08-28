@@ -30,8 +30,8 @@ def create_roles():
     """Crear roles básicos del sistema"""
     roles = [
         {'nombre': 'Administrador', 'descripcion': 'Acceso total al sistema'},
-        {'nombre': 'Vendedor', 'descripcion': 'Puede gestionar ventas y clientes'},
-        {'nombre': 'Proveedor', 'descripcion': 'Puede gestionar sus órdenes y productos'}
+        {'nombre': 'Vendedor', 'descripcion': 'Puede gestionar, ventas y clientes'},
+        {'nombre': 'Proveedor', 'descripcion': 'Puede gestionar, sus órdenes y productos'}
     ]
     
     for role_data in roles:
