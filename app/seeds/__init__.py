@@ -3,28 +3,34 @@ from app.models import Role, User, City, Store, Supplier, Staff, Product
 
 def init_db():
     """Inicializa la base de datos con datos de ejemplo"""
-    # 1. Crear roles básicos
-    create_roles()
-    
-    # 2. Crear usuario administrador
-    create_admin_user()
-    
-    # 3. Crear ciudades de ejemplo
-    create_cities()
-    
-    # 4. Crear tiendas de ejemplo
-    create_stores()
-    
-    # 5. Crear proveedores de ejemplo
-    create_suppliers()
-    
-    # 6. Crear empleados de ejemplo
-    create_staff()
-    
-    # 7. Crear productos de ejemplo
-    create_products()
-    
-    print("Datos iniciales creados exitosamente")
+    try:
+        # 1. Crear roles básicos
+        create_roles()
+        
+        # 2. Crear usuario administrador
+        create_admin_user()
+        
+        # 3. Crear ciudades de ejemplo
+        create_cities()
+        
+        # 4. Crear tiendas de ejemplo
+        create_stores()
+        
+        # 5. Crear proveedores de ejemplo
+        create_suppliers()
+        
+        # 6. Crear empleados de ejemplo
+        create_staff()
+        
+        # 7. Crear productos de ejemplo
+        create_products()
+        
+        db.session.commit()
+        print("Datos iniciales creados exitosamente")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al inicializar la base de datos: {str(e)}")
+        raise 
 
 def create_roles():
     """Crear roles básicos del sistema"""
@@ -38,8 +44,6 @@ def create_roles():
         if not Role.query.filter_by(nombre=role_data['nombre']).first():
             role = Role(**role_data)
             db.session.add(role)
-    
-    db.session.commit()
 
 def create_admin_user():
     """Crear usuario administrador por defecto"""
@@ -53,7 +57,6 @@ def create_admin_user():
         )
         admin_user.password ='Admin123!'
         db.session.add(admin_user)
-        db.session.commit()
 
 def create_cities():
     """Crear ciudades de ejemplo"""
@@ -66,8 +69,6 @@ def create_cities():
         if not City.query.filter_by(nombre=ciudad_nombre).first():
             ciudad = City(nombre=ciudad_nombre)
             db.session.add(ciudad)
-    
-    db.session.commit()
 
 def create_stores():
     """Crear tiendas de ejemplo"""
@@ -89,8 +90,8 @@ def create_stores():
                     ciudad_id=ciudad.id_ciudad
                 )
                 db.session.add(tienda)
-    
-    db.session.commit()
+            else:
+                print(f"Advertencia: Ciudad {tienda_data['ciudad']} no encontrada para la tienda {tienda_data['nombre']}")
 
 def create_suppliers():
     """Crear proveedores de ejemplo"""
@@ -124,8 +125,8 @@ def create_suppliers():
                     ciudad_id=ciudad.id_ciudad
                 )
                 db.session.add(proveedor)
-    
-    db.session.commit()
+            else:
+                print(f"Advertencia: Ciudad {prov_data['ciudad']} no encontrada para el proveedor {prov_data['nombre']}")
 
 def create_staff():
     """Crear empleados de ejemplo"""
@@ -133,6 +134,10 @@ def create_staff():
     rol_vendedor = Role.query.filter_by(nombre='Vendedor').first()
     tienda_medellin = Store.query.filter_by(nombre='Tienda Principal Medellín').first()
     ciudad_medellin = City.query.filter_by(nombre='Medellín').first()
+    
+    if not all([rol_vendedor, tienda_medellin, ciudad_medellin]):
+        print("Advertencia: No se pudo crear el empleado de ejemplo - faltan datos requeridos")
+        return
     
     if rol_vendedor and tienda_medellin and ciudad_medellin:
         # Crear usuario vendedor
@@ -156,9 +161,7 @@ def create_staff():
                 usuario_id=user_vendedor.id_usuario
             )
             db.session.add(empleado)
-    
-    db.session.commit()
-
+            
 def create_products():
     """Crear productos de ejemplo"""
     proveedores = Supplier.query.all()
@@ -213,5 +216,5 @@ def create_products():
                     proveedor_id=proveedor.id_proveedor
                 )
                 db.session.add(producto)
-    
-    db.session.commit()
+            else:
+                print(f"Advertencia: Proveedor {prod_data['proveedor']} no encontrado para el producto {prod_data['nombre']}")
