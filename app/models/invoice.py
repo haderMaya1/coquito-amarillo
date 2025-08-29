@@ -1,7 +1,7 @@
 from app import db
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 from datetime import datetime
-import re
+
 
 class Invoice(db.Model):
     __tablename__ = 'facturas'
@@ -23,19 +23,6 @@ class Invoice(db.Model):
     def activar(self):
         """Reactivar factura previamente desactivada."""
         self.activo = True
-
-    # --- Validaciones ---
-    @validates('total')
-    def validate_total(self, key, value):
-        if value is None or value < 0:
-            raise ValueError("El total de la factura no puede ser negativo.")
-        return value
-
-    @validates('venta_id')
-    def validate_venta_id(self, key, value):
-        if not value or not re.match(r'^\d+$', str(value)):
-            raise ValueError("El ID de la venta debe ser válido.")
-        return value
     
     def __repr__(self):
         return f'<Factura {self.id_factura} - Venta {self.venta_id} - Total {self.total}>'

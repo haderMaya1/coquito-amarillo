@@ -1,6 +1,5 @@
 from app import db
-from sqlalchemy.orm import relationship, validates
-import re
+from sqlalchemy.orm import relationship
 
 class SaleProduct(db.Model):
     __tablename__ = 'venta_producto'
@@ -27,25 +26,6 @@ class SaleProduct(db.Model):
     def activar(self):
         """Reactivar producto en la venta."""
         self.activo = True
-
-    # --- Validaciones ---
-    @validates('cantidad')
-    def validate_cantidad(self, key, value):
-        if value is None or value <= 0:
-            raise ValueError("La cantidad debe ser un número mayor a cero.")
-        return value
-
-    @validates('precio_unitario')
-    def validate_precio_unitario(self, key, value):
-        if value is None or value < 0:
-            raise ValueError("El precio unitario no puede ser negativo.")
-        return value
-
-    @validates('id_venta', 'id_producto')
-    def validate_foreign_keys(self, key, value):
-        if not value or not re.match(r'^\d+$', str(value)):
-            raise ValueError(f"El campo {key} debe ser un ID válido.")
-        return value
     
     def __repr__(self):
         return f'<SaleProduct venta:{self.id_venta} producto:{self.id_producto} cantidad:{self.cantidad}>'

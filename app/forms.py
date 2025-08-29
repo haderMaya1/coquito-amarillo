@@ -27,7 +27,7 @@ class ConfirmDeleteForm(FlaskForm):
 class UserForm(BaseForm):
     nombre = StringField('Usuario', validators=[
         DataRequired(message='El nombre de usuario es requerido'),
-        Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
+        Length(min=3, max=100, message='Debe tener entre 3 y 100 caracteres')
     ])
     
     email = EmailField('Email', validators=[
@@ -37,7 +37,7 @@ class UserForm(BaseForm):
     
     password = PasswordField('Contraseña', validators=[
         DataRequired(message='La contraseña es requerida'),
-        Length(max=100, message='No puede exceder 100 caracteres')
+        Length(min=8, message='Debe tener almenos 8 caracteres')
     ])
     
     confirm_password = PasswordField('Confirmar Contraseña', validators=[
@@ -59,7 +59,7 @@ class UserForm(BaseForm):
 class RolForm(BaseForm):
     nombre = StringField('Nombre', validators=[
         DataRequired(message='El nombre es requerido'),
-        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+        Length(min=2, max=50, message='Debe tener entre 2 y 50 caracteres')
     ])
     
     descripcion = StringField('Descripcion', validators=[
@@ -80,7 +80,7 @@ class ProductForm(BaseForm):
     
     descripcion = StringField('Descripcion', validators=[
         Optional(),
-        Length(min=2, max=150, message='Debe tener entre 2 a 150 caracteres')
+        Length(min=2, max=255, message='Debe tener entre 2 a 150 caracteres')
     ])
     
     precio = DecimalField('Precio', validators=[
@@ -89,7 +89,7 @@ class ProductForm(BaseForm):
     ])
     
     stock = IntegerField('Stock', validators=[
-        Optional(),
+        DataRequired(message='El stock es requerido'),
         NumberRange(min=0, message='El stock no puede ser negativo')
     ])
     
@@ -122,17 +122,17 @@ class StockForm(FlaskForm):
 class ClienteForm(FlaskForm):
     nombre = StringField('Nombre', validators=[
         DataRequired(message='El nombre de cliente es requerido'),
-        Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
+        Length(min=3, max=100, message='Debe tener entre 3 y 100 caracteres')
     ])
     
     direccion = StringField('Direccion', validators=[
         Optional(),
-        Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
+        Length(min=3, max=150, message='Debe tener entre 3 y 150 caracteres')
     ])
     
     telefono = StringField('Telefono', validators=[
         DataRequired(message='Ingrese un telefono para comunicacion con el cliente'),
-        Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
+        Length(min=3, max=15, message='Debe tener entre 3 y 15 caracteres')
     ])
     ciudad_id = IntegerField('ciudad_id', coerce=int, validators=[
         DataRequired(message='Escoge una ciudad')
@@ -148,7 +148,7 @@ class ClienteForm(FlaskForm):
 class CiudadForm(FlaskForm):
     nombre = StringField('Nombre', validators=[
         DataRequired(message='El nombre de la ciudad es necesario'),
-        Length(min=3, max=100, message='Debe tener entre 3 y 100 caracteres')
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
     ])
     
     submit = SubmitField('Guardar')
@@ -171,6 +171,12 @@ class SaleForm(FlaskForm):
         ]
     )
     
+    estado = StringField('Estado', choices=['activa','anulada'], validators=[
+        Optional()
+    ])
+    
+    activo = BooleanField('Estado')
+    
     cliente_id = IntegerField(
         'Cliente', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un cliente')]
@@ -191,7 +197,7 @@ class SaleForm(FlaskForm):
 #-----------Venta producto--------------
 class SaleProductForm(FlaskForm):
     id_venta = IntegerField(
-        'Venta',
+        'Venta', coerce =int,
         validators=[DataRequired(message='Debe asociar esta línea a una venta')]
     )
     
@@ -208,8 +214,8 @@ class SaleProductForm(FlaskForm):
         ]
     )
     
-    subtotal = DecimalField(
-        'Subtotal',
+    precio_unitario = DecimalField(
+        'Precio unitario',
         places=2,
         validators=[
             DataRequired(message='Debe indicar el subtotal'),
@@ -238,7 +244,7 @@ class InvoiceForm(FlaskForm):
     )
     
     venta_id = IntegerField(
-        'Venta',
+        'Venta', coerce =int,
         validators=[DataRequired(message='Debe asociar esta factura a una venta')]
     )
     
@@ -254,7 +260,10 @@ class ClientOrderForm(FlaskForm):
     )
     
     estado = StringField(
-        'Estado',
+        'Estado', choices=[
+        ('pendiente', 'Pendiente'),
+        ('completada', 'Completada'),
+        ('cancelada', 'Cancelada')],
         validators=[
             DataRequired(message='El estado de la orden es obligatorio'),
             Length(min=3, max=50, message='Debe tener entre 3 y 50 caracteres')
@@ -262,7 +271,7 @@ class ClientOrderForm(FlaskForm):
     )
     
     cliente_id = IntegerField(
-        'Cliente',
+        'Cliente', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un cliente')]
     )
     
@@ -276,7 +285,7 @@ class ClientOrderProductForm(FlaskForm):
     )
     
     id_producto = IntegerField(
-        'Producto',
+        'Producto', coerce=int,
         validators=[DataRequired(message='Debe seleccionar un producto')]
     )
     
@@ -306,6 +315,8 @@ class SupplierForm(FlaskForm):
     
     activo = BooleanField('Activo', default=True)
     
+    fecha_eliminacion = DateTimeField('Fecha de Desactivacion', format='%Y-%m-%d %H:%M', validators=[Optional()])
+    
     submit = SubmitField('Guardar')
     
 #-------------Orden proveedor-------------
@@ -324,6 +335,10 @@ class SupplierOrderForm(FlaskForm):
     
 #----------Orden, Producto proveedor---------
 class SupplierOrderProductForm(FlaskForm):
+    id_orden_proveedor = SelectField('Orden de Proveedor', coerce=int, validators=[
+        DataRequired(message="Debe seleccionar un producto")
+    ])
+    
     id_producto = SelectField('Producto', coerce=int, validators=[
         DataRequired(message="Debe seleccionar un producto")
     ])
@@ -361,6 +376,12 @@ class StaffForm(FlaskForm):
     proveedor_id = SelectField('Proveedor', coerce=int, validators=[
         Optional()
     ])
+    
+    activo = BooleanField('Activo', default=True)
+    
+    fecha_eliminacion = DateTimeField('Fecha de Desactivacion', format='%Y-%m-%d %H:%M', validators=[Optional()])
+    
+    submit = SubmitField('Guardar')
 
 #------------Tienda----------------
 class StoreForm(FlaskForm):
@@ -375,6 +396,10 @@ class StoreForm(FlaskForm):
     ciudad_id = SelectField('Ciudad', coerce=int, validators=[
         DataRequired(message='La ciudad es requerida')
     ])
+    
+    activo = BooleanField('Activo', default=True)
+    
+    submit = SubmitField('Guardar')
 
 #--------------Login---------------------
 class LoginForm(FlaskForm):
@@ -385,6 +410,8 @@ class LoginForm(FlaskForm):
     password = PasswordField('Contraseña', validators=[
         DataRequired(message='La contraseña es requerida')
     ])
+    
+    submit = SubmitField('Guardar')
 
 #----------------Registro-----------------
 class RegisterForm(FlaskForm):
@@ -407,6 +434,8 @@ class RegisterForm(FlaskForm):
     rol_id = SelectField('Rol', coerce=int, validators=[
         DataRequired(message='El rol es requerido')
     ])
+    
+    submit = SubmitField('Guardar')
 
 #-----------Cambiar Contraseña-------------
 class ChangePasswordForm(FlaskForm):
@@ -422,6 +451,7 @@ class ChangePasswordForm(FlaskForm):
         EqualTo('new_password', message='Las contraseñas no coinciden')
     ])
     
+    submit = SubmitField('Guardar')
 # ... (otros formularios existentes)
 class ProfileForm(FlaskForm):
     nombre = StringField('Nombre', validators=[
@@ -432,12 +462,16 @@ class ProfileForm(FlaskForm):
         DataRequired(message='El email es requerido'),
         Email(message='Debe ser un email válido')
     ])
+    
+    submit = SubmitField('Guardar')
 
 class DateRangeForm(FlaskForm):
     """Formulario para seleccionar un rango de fechas."""
     start_date = DateField('Fecha de inicio', validators=[Optional()])
     end_date = DateField('Fecha de fin', validators=[Optional()])
     submit = SubmitField('Filtrar')
+    
+    submit = SubmitField('Guardar')
 
 class SalesFilterForm(FlaskForm):
     """Formulario para filtrar y agrupar ventas."""

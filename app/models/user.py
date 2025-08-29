@@ -1,7 +1,7 @@
 # app/models/user.py
 from flask_login import UserMixin
 from app import db, bcrypt
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 from datetime import datetime
 import re
 
@@ -73,19 +73,6 @@ class User(UserMixin, db.Model):
     def get_todos(cls):
         """Obtiene todos los usuarios, activos e inactivos"""
         return cls.query
-    
-    #Validaciones
-    @validates('nombre')
-    def validate_nombre(self, key, nombre):
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
-            raise ValueError('El nombre solo puede contener letras, números y guiones bajos')
-        return nombre
-    
-    @validates('email')
-    def validate_email(self, key, email):
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            raise ValueError('Email invalido')
-        return email
     
     def __repr__(self):
         return f'<User {self.nombre}>'

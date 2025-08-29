@@ -1,7 +1,5 @@
 from app import db
-from sqlalchemy.orm import relationship, validates
-import re
-
+from sqlalchemy.orm import relationship
 
 class SupplierOrderProduct(db.Model):
     __tablename__ = 'ordenproveedor_producto'
@@ -13,13 +11,6 @@ class SupplierOrderProduct(db.Model):
     # Relaciones
     orden = relationship('SupplierOrder', back_populates='productos')
     producto = relationship('Product', back_populates='ordenes_proveedor')
-    
-    # --- Validaciones ---
-    @validates('cantidad')
-    def validate_cantidad(self, key, cantidad):
-        if not isinstance(cantidad, int) or cantidad <= 0:
-            raise ValueError("La cantidad debe ser un número entero positivo")
-        return cantidad
     
     def __repr__(self):
         return f'<SupplierOrderProduct orden:{self.id_orden_proveedor} producto:{self.id_producto}>'

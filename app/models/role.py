@@ -1,8 +1,7 @@
 # app/models/role.py
 from app import db
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 from datetime import datetime
-import re
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -42,33 +41,6 @@ class Role(db.Model):
     @classmethod
     def get_todos(cls):
         return cls.query
-
-    # Validaciones
-    @validates('nombre')
-    def validate_nombre(self, key, nombre):
-        if nombre is None:
-            raise ValueError('El nombre es obligatorio')
-        nombre = nombre.strip()
-        # Letras, números, guion bajo, espacios y acentos
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ]+$', nombre):
-            raise ValueError('El nombre solo puede contener letras, números, espacios y guiones bajos')
-        return nombre
-
-    @validates('descripcion')
-    def validate_descripcion(self, key, descripcion):
-        # Es opcional; si viene None, lo dejamos pasar
-        if descripcion is None:
-            return descripcion
-        descripcion = descripcion.strip()
-        if descripcion == '':
-            return None
-        # Texto con puntuación básica
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ.,:;()\-#]+$', descripcion):
-            raise ValueError('La descripción contiene caracteres no permitidos')
-        # Límite lógico acorde a la columna
-        if len(descripcion) > 150:
-            raise ValueError('La descripción no puede exceder 150 caracteres')
-        return descripcion
 
     def __repr__(self):
         return f'<Role {self.nombre}>'

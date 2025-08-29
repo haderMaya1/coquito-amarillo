@@ -1,6 +1,5 @@
 from app import db
-from sqlalchemy.orm import relationship, validates
-import re
+from sqlalchemy.orm import relationship
 
 class City(db.Model):
     __tablename__ = 'ciudades'
@@ -13,17 +12,6 @@ class City(db.Model):
     clientes = relationship('Client', back_populates='ciudad', cascade='all, delete-orphan')
     proveedores = relationship('Supplier', back_populates='ciudad', cascade='all, delete-orphan')
     personal = relationship('Staff', back_populates='ciudad', cascade='all, delete-orphan')
-    
-      # -------- Validaciones ----------
-    @validates('nombre')
-    def validate_nombre(self, key, nombre):
-        if not nombre or len(nombre.strip()) < 2:
-            raise ValueError("El nombre de la ciudad debe tener al menos 2 caracteres")
-        if len(nombre) > 100:
-            raise ValueError("El nombre de la ciudad no puede exceder 100 caracteres")
-        if not re.match(r'^[\w\sáéíóúÁÉÍÓÚñÑ-]+$', nombre.strip()):
-            raise ValueError("El nombre de la ciudad contiene caracteres inválidos")
-        return nombre.strip().title()  # Normalizamos a formato Capitalizado
     
     # -------- Métodos de consulta ----------
     @classmethod

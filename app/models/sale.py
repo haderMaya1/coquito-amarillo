@@ -1,7 +1,7 @@
 from app import db
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 from datetime import datetime
-import re
+
 
 class Sale(db.Model):
     __tablename__ = 'ventas'
@@ -42,38 +42,6 @@ class Sale(db.Model):
         self.activo = True
         for p in self.productos:
             p.activo = True
-    
-    # --- Validaciones ---
-    @validates('estado')
-    def validate_estado(self, key, value):
-        if value not in ['activa', 'anulada']:
-            raise ValueError("El estado de la venta debe ser 'activa' o 'anulada'.")
-        return value
-
-    @validates('total')
-    def validate_total(self, key, value):
-        if value is None or value < 0:
-            raise ValueError("El total de la venta no puede ser negativo ni nulo.")
-        return value
-
-    @validates('cliente_id', 'empleado_id', 'tienda_id')
-    def validate_foreign_keys(self, key, value):
-        if not value or not re.match(r'^\d+$', str(value)):
-            raise ValueError(f"El campo {key} debe ser un ID válido.")
-        return value
-
-    def validate(self):
-        """Validaciones adicionales a nivel de instancia"""
-        errors = []
-        if not self.cliente_id:
-            errors.append("Debe asociarse un cliente a la venta.")
-        if not self.empleado_id:
-            errors.append("Debe asociarse un empleado (vendedor) a la venta.")
-        if not self.tienda_id:
-            errors.append("La venta debe estar ligada a una tienda.")
-        if not self.productos or len(self.productos) == 0:
-            errors.append("La venta debe incluir al menos un producto.")
-        return errors
     
     def __repr__(self):
         return f'<Venta {self.id_venta} - Total: {self.total}>'
