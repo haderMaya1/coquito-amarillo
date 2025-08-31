@@ -18,10 +18,7 @@ class Supplier(db.Model):
     ordenes = relationship('SupplierOrder', backref='proveedores')
     empleados = relationship('Staff', backref='proveedores')
     
-    @classmethod
-    def get_activas(cls):
-        """Alias para get_activos (para consistencia con otros modelos)"""
-        return cls.get_activos()
+    
         
     # --- Métodos de negocio ---
     def desactivar(self):
@@ -38,6 +35,11 @@ class Supplier(db.Model):
     def get_activos(cls):
         """Obtiene solo los proveedores activos"""
         return cls.query.filter_by(activo=True)
+    
+    @classmethod
+    def get_activas(cls):
+        """Alias para get_activos (para consistencia con otros modelos)"""
+        return cls.get_activos()
     
     @classmethod
     def get_inactivos(cls):
