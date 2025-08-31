@@ -151,6 +151,10 @@ class CiudadForm(FlaskForm):
         Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
     ])
     
+    activo =  BooleanField('Estado')
+    
+    fecha_eliminacion = DateTimeField('Fecha de Desactivacion', format='%Y-%m-%d %H:%M')
+    
     submit = SubmitField('Guardar')
     
 #-----------Venta--------------

@@ -20,8 +20,8 @@ class Sale(db.Model):
     cliente = relationship('Client', back_populates='ventas')
     empleado = relationship('Staff', back_populates='ventas')
     tienda = relationship('Store', back_populates='ventas')
-    factura = relationship('Invoice', back_populates='venta', uselist=False, cascade='all, delete-orphan')
-    productos = relationship('SaleProduct', back_populates='venta', cascade='all, delete-orphan')
+    factura = relationship('Invoice', back_populates='venta', uselist=False)
+    productos = relationship('SaleProduct', back_populates='venta')
     
     # --- Métodos de negocio ---
     def calcular_total(self):

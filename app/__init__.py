@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from config import config
 from flask_wtf import CSRFProtect
+import os
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -13,6 +14,15 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 migrate = Migrate()
 
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'claveSegura'
+    # ... otras configuraciones ...
+    
+    # Configuraciones CSRF
+    WTF_CSRF_ENABLED = True  # Habilitar CSRF (por defecto es True)
+    WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or 'csrf_clave_segura'
+    WTF_CSRF_TIME_LIMIT = 3600  # Tiempo de expiración del token en segundos (por defecto 3600)
+    
 # Añadir esto después de la configuración del login_manager
 @login_manager.user_loader
 def load_user(user_id):
@@ -40,7 +50,7 @@ def create_app(config_name='default'):
             init_db()
             
     # ... después de crear la app
-    app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']  # Para protección CSRF
+    # app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']  # Para protección CSRF
     
     
     from app.routes.auth import auth_bp #

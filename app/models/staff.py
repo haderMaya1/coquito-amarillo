@@ -21,7 +21,7 @@ class Staff(db.Model):
     tienda = relationship('Store', back_populates='personal')
     usuario = relationship('User', backref='empleado_asociado', uselist=False)
     proveedor = relationship('Supplier', back_populates='empleados')
-    ventas = relationship('Sale', back_populates='empleado', cascade='all, delete-orphan')
+    ventas = relationship('Sale', back_populates='empleado')
  
     def desactivar(self):
         """Marca el empleado como inactivo (soft delete)"""

@@ -16,9 +16,9 @@ class Product(db.Model):
     
     # Relaciones
     proveedor = relationship('Supplier', back_populates='productos')
-    ventas = relationship('SaleProduct', back_populates='producto', cascade='all, delete-orphan')
-    ordenes_cliente = relationship('ClientOrderProduct', back_populates='producto', cascade='all, delete-orphan')
-    ordenes_proveedor = relationship('SupplierOrderProduct', back_populates='producto', cascade='all, delete-orphan')
+    ventas = relationship('SaleProduct', back_populates='producto')
+    ordenes_cliente = relationship('ClientOrderProduct', back_populates='producto')
+    ordenes_proveedor = relationship('SupplierOrderProduct', back_populates='producto')
     
     def aumentar_stock(self, cantidad: int):
         """Aumenta el stock del producto"""

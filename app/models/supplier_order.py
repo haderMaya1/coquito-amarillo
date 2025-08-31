@@ -12,7 +12,7 @@ class SupplierOrder(db.Model):
     
     # Relaciones
     proveedor = relationship('Supplier', back_populates='ordenes')
-    productos = relationship('SupplierOrderProduct', back_populates='orden', cascade='all, delete-orphan')
+    productos = relationship('SupplierOrderProduct', back_populates='orden')
     
     # --- Métodos de negocio ---
     def recibir_orden(self):

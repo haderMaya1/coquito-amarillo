@@ -12,7 +12,7 @@ class ClientOrder(db.Model):
     
     # Relaciones
     cliente = relationship('Client', back_populates='ordenes')
-    productos = relationship('ClientOrderProduct', back_populates='orden', cascade='all, delete-orphan')
+    productos = relationship('ClientOrderProduct', back_populates='orden')
 
     def __repr__(self):
         return f'<OrdenCliente id:{self.id_orden_cliente} cliente:{self.cliente_id} estado:{self.estado}>'

@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- ===============================
 CREATE TABLE IF NOT EXISTS ciudades (
     id_ciudad INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL UNIQUE
+    nombre TEXT NOT NULL UNIQUE,
+    activo INTEGER DEFAULT 1,
+    fecha_eliminación TEXT
 );
 
 -- ===============================

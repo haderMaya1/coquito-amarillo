@@ -15,8 +15,8 @@ class Client(db.Model):
     
     # Relaciones
     ciudad = relationship('City', back_populates='clientes')
-    ventas = relationship('Sale', back_populates='cliente', cascade='all, delete-orphan')
-    ordenes = relationship('ClientOrder', back_populates='cliente', cascade='all, delete-orphan')
+    ventas = relationship('Sale', back_populates='cliente')
+    ordenes = relationship('ClientOrder', back_populates='cliente')
     
     def desactivar(self):
         """Marca el cliente como inactivo (soft delete)"""
