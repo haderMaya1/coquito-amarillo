@@ -13,7 +13,7 @@ class Store(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)
     
     # Relaciones
-    ciudad = relationship('City', back_populates='tiendas')
+    # ciudad = relationship('City', back_populates='tiendas')
     personal = relationship('Staff', backref='tienda')
     ventas = relationship('Sale', backref='tienda')
     

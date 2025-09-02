@@ -11,7 +11,7 @@ class SupplierOrder(db.Model):
     proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedores.id_proveedor'), nullable=False)
     
     # Relaciones
-    proveedor = relationship('Supplier', back_populates='ordenes')
+    # proveedor = relationship('Supplier', back_populates='ordenes')
     productos = relationship('SupplierOrderProduct', back_populates='orden')
     
     # --- Métodos de negocio ---

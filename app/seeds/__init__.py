@@ -169,6 +169,7 @@ def create_products():
     productos = [
         {
             'nombre': 'Arroz Blanco',
+            'categoria': 'Granos',
             'descripcion': 'Arroz blanco de primera calidad, pacas de 1kg',
             'precio': 2500,
             'stock': 100,
@@ -176,6 +177,7 @@ def create_products():
         },
         {
             'nombre': 'Aceite de Oliva',
+            'categoria': 'Aceite',
             'descripcion': 'Aceite de oliva extra virgen, botella 500ml',
             'precio': 18000,
             'stock': 50,
@@ -183,6 +185,7 @@ def create_products():
         },
         {
             'nombre': 'Miel Natural',
+            'categoria': 'Dulces',
             'descripcion': 'Miel 100% natural, frasco de 250g',
             'precio': 8500,
             'stock': 75,
@@ -190,6 +193,7 @@ def create_products():
         },
         {
             'nombre': 'Café Premium',
+            'categoria': 'Granos',
             'descripcion': 'Café tostado premium, paquete de 500g',
             'precio': 12000,
             'stock': 60,
@@ -197,6 +201,7 @@ def create_products():
         },
         {
             'nombre': 'Azúcar Orgánica',
+            'categoria': 'Condimento',
             'descripcion': 'Azúcar morena orgánica, paquete de 1kg',
             'precio': 3800,
             'stock': 90,
@@ -210,6 +215,7 @@ def create_products():
             if proveedor:
                 producto = Product(
                     nombre=prod_data['nombre'],
+                    categoria=prod_data['categoria'],
                     descripcion=prod_data['descripcion'],
                     precio=prod_data['precio'],
                     stock=prod_data['stock'],
