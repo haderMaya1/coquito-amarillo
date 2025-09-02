@@ -14,9 +14,9 @@ class Supplier(db.Model):
     
     # Relaciones
     ciudad = relationship('City', backref='proveedores')
-    productos = relationship('Product', backref='proveedores')
-    ordenes = relationship('SupplierOrder', backref='proveedores')
-    empleados = relationship('Staff', backref='proveedores')
+    productos = relationship('Product', backref='proveedor')
+    ordenes = relationship('SupplierOrder', backref='proveedor')
+    empleados = relationship('Staff', backref='proveedor')
     
     
         

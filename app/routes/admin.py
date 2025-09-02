@@ -58,15 +58,14 @@ def create_user():
                 flash('El email ya está registrado', 'danger')
                 return redirect(url_for('admin.create_user'), form=form, roles=roles)
             
-            sanitize_data = sanitize_form_data(form.data)
-            
             nuevo_usuario = User(
-                nombre = sanitize_data['nombre'],
-                email = sanitize_data['email'],
-                password = sanitize_data['password'],
-                rol_id = sanitize_data['rol_id'],
-                activo = sanitize_data['activo']
+                nombre = form.nombre.data.strip(),
+                email = form.email.data.strip().lower(),
+                rol_id = form.rol_id.data,
+                activo = form.activo.data
             )
+            
+            nuevo_usuario.password = form.password.data
             
             if not form.activo.data:
                 nuevo_usuario.fecha_eliminacion = form.fecha_eliminacion.data
@@ -92,35 +91,40 @@ def create_user():
 @login_required
 @admin_required
 def edit_user(user_id):
+    usuario = User.query.get_or_404(user_id)
     form = UserForm()
     
     #Cargar roles
     roles = Role.query.all()
     form.rol_id.choices = [(role.id_rol, role.nombre) for role in roles]
     
-    actualizar_usuario = User.query.get_or_404(user_id)
-    
     if form.validate_on_submit():
-        try:
-            sanitize_data = sanitize_form_data(form.data)
-                
-            actualizar_usuario.nombre = sanitize_data['nombre']
-            actualizar_usuario.email = sanitize_data['email']
-            actualizar_usuario.rol_id = sanitize_data['rol_id']
-            actualizar_usuario.activo = sanitize_data['activo']
+        try:  
+            existing_user = User.query.filter(
+                User.email == form.email.data,
+                User.id_usuario != usuario.id_usuario
+            ).first()
             
-            if User.query.filter(User.email == form.email.data, User.id_usuario != actualizar_usuario.id_usuario).first():
+            if existing_user:
+                flash('El email ya  está registrado en otro usuario', 'danger')
+                return render_template('admin/edit_user.html', usuario=usuario, roles=roles, form=form)
+            
+            usuario.nombre = form.nombre.data.strip()
+            usuario.email = form.email.data.strip().lower()
+            usuario.rol_id = form.rol_id.data
+            usuario.activo = form.activo.data
+            
+            if User.query.filter(User.email == form.email.data, User.id_usuario != usuario.id_usuario).first():
                 flash('El nombre ya está registrado en otro cliente', 'danger')
-                return redirect(url_for('admin.edit_user', user_id=actualizar_usuario.id_usuario))
+                return redirect(url_for('admin.edit_user', user_id=usuario.id_usuario))
             
-            new_password = sanitize_data.get('new_password')    
-            if new_password:
-                actualizar_usuario.password(new_password)
+            if form.password.data:
+                usuario.password = form.password.data
                     
             if not form.activo.data:
-                actualizar_usuario.fecha_eliminacion = form.fecha_eliminacion.data
+                usuario.fecha_eliminacion = datetime.utcnow()
             else:
-                actualizar_usuario.fecha_eliminacion = None
+                usuario.fecha_eliminacion = None
                 
             db.session.commit()
             flash('Usuario actualizado exitosamente', 'success')
@@ -130,7 +134,7 @@ def edit_user(user_id):
             db.session.rollback()
             flash(f'Error al crear usuario: {str(e)}', 'error')
         
-    return render_template('admin/edit_user.html', usuario=actualizar_usuario, roles=roles)  
+    return render_template('admin/edit_user.html', usuario=usuario, roles=roles)  
     
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
@@ -145,13 +149,15 @@ def delete_user(user_id):
             return redirect(url_for('admin.manage_users'))
 
         try:
-            user.desactivar()
+            user.activo = False
+            user.fecha_eliminacion = datetime.utcnow()
+            db.session.commit()
             flash('Usuario desactivado exitosamente', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al desactivar usuario: {str(e)}', 'danger')
 
-    return redirect(url_for('admin.manage_users'))
+    return redirect(url_for('admin.manage_users'), user=user, form=form)
 
 @admin_bp.route('/users/<int:user_id>/activate', methods=['POST'])
 @login_required
@@ -164,7 +170,9 @@ def activate_user(user_id):
         return redirect(url_for('admin.manage_users'))      
     
     try:
-        user.activar()
+        user.activo = True
+        user.fecha_eliminacion = None
+        db.session.commit()
         flash('Usuario reactivado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
@@ -194,20 +202,18 @@ def create_role():
     if form.validate_on_submit():
         try:
             nombre = form.nombre.data
-            if Role.query.filter_by(nombre=nombre).firts():
+            if Role.query.filter_by(nombre=nombre).first():
                 flash('El rol ya existe', 'danger')
                 return redirect(url_for('admin.create_role'))
             
-            sanitize_data = sanitize_form_data(form.data)
-            
             nuevo_rol = Role(
-                nombre = sanitize_data['nombre'],
-                descripcion = sanitize_data['description'],
-                activo = sanitize_data['activo']
+                nombre = form.nombre.data.strip(),
+                descripcion = form.descripcion.data,
+                activo = form.activo.data
             )
             
             if not form.activo.data:
-                nuevo_rol.fecha_eliminacion = form.fecha_eliminacion.data
+                nuevo_rol.fecha_eliminacion = datetime.utcnow()
             else:
                 nuevo_rol.fecha_eliminacion = None
             
@@ -224,7 +230,7 @@ def create_role():
             db.session.rollback()
             flash(f'Error al crear Rol: {str(e)}', 'error')
         
-    return render_template('admin/create_role.html')
+    return render_template('admin/create_role.html', form=form)
 
 @admin_bp.route('/roles/<int:role_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -235,17 +241,21 @@ def edit_role(role_id):
     
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
+            existing_role = Role.query.filter(
+                Role.nombre == form.nombre.data,
+                Role.id_rol != role.id_rol   
+            ).first()
             
-            role.nombre = sanitize_data['nombre']
-            role.descripcion = sanitize_data['descripcion']
-            
-            if Role.query.filter(Role.nombre == form.nombre.data, Role.id_rol != Role.id_rol).first():
+            if existing_role:
                 flash('El nombre ya está registrado en otro Rol', 'danger')
-                return redirect(url_for('admin.edit_role', role_id=role_id.id_rol))
+                return render_template('admin/edit_role.html', role=role, form=form)
+            
+            role.nombre = form.nombre.data.strip()
+            role.descripcion = form.descripcion.data
+            role.activo = form.activo.data
             
             if not form.activo.data:
-                role.fecha_eliminacion = form.fecha_eliminacion.data
+                role.fecha_eliminacion = datetime.utcnow()
             else:
                 role.fecha_eliminacion = None
                 
@@ -264,20 +274,25 @@ def edit_role(role_id):
 @admin_required
 def delete_role(role_id):
     role = Role.query.get_or_404(role_id)
+    
     form = ConfirmDeleteForm()
+    
     if form.validate_on_submit():
         # Verificar si hay usuarios con este rol
         try:
-            if role.usuarios:
+            if role.usuarios.count() > 0:
                 flash('No se puede eliminar el rol porque hay usuarios asignados a él', 'danger')
                 return redirect(url_for('admin.manage_roles'))
         
-            role.desactivar()
+            role.activo = False
+            role.fecha_eliminacion = datetime.utcnow()
+            db.session.commit()
             flash('Rol desactivado exitosamente', 'success')
         except Exception as e:
+            db.session.rollback()
             flash(f'Error al desactivar rol: {str(e)}', 'danger')
             
-    return redirect(url_for('admin.manage_roles'))
+    return redirect(url_for('admin.manage_roles'), role=role, form=form)
 
 @admin_bp.route('/roles/<int:role_id>/activate', methods=['POST'])
 @login_required
@@ -290,12 +305,14 @@ def activate_role(role_id):
         return redirect(url_for('admin.manage_roles'))
     
     try:
-        role.activar()
+        role.activo = True
+        role.fecha_eliminacion = None
+        db.session.commit()
         flash('Rol reactivado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al activar el rol: {str(e)}', 'danger')
-    return redirect(url_for('admin.manage_roles'))
+    return redirect(url_for('admin.manage_roles'), role=role)
 
 #----Codigos provenientes de auth, para prevenir errores de sobre-escritura
 
@@ -339,13 +356,20 @@ def toggle_user_status(user_id):
     try:
         usuario = User.query.get_or_404(user_id)
         
-        if usuario.activo:
+        if usuario.id_usuario == current_user.id_usuario:
             usuario.activo = False
-            flash('Usuario desactivado exitosamente', 'success')
-        else:
-            usuario.activo = True
-            flash('Usuario activado exitosamente', 'success')
+            flash('No puedes cambiar el estado de tu propia cuenta', 'dannger')
+            return redirect(url_for('admin.manage_users'))
         
+        usuario.activo = not usuario.activo
+        
+        if usuario.activo:
+            usuario.fecha_eliminacion = None
+            flash('Usuario activado exitosamente', 'success')
+        else:
+            usuario.fecha_eliminacion = datetime.utcnow()
+            flash('Usuario desactivado exitosamente', 'success')
+            
         db.session.commit()
         return redirect(url_for('admin.manage_users'))
     

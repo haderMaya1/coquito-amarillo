@@ -6,6 +6,8 @@ from app.forms import SaleForm, SaleProductForm, InvoiceForm
 from app.utils.decorators import seller_required
 from app.utils.security import sanitize_form_data
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
+import json
 
 sales_bp = Blueprint('sales', __name__)
 
@@ -56,70 +58,69 @@ def create_sale():
     form = SaleForm()
 
     if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
+        try:
+            cliente_id = form.cliente_id.data
+            productos_data = json.loads(request.form.get('productos', '[]'))  # esperado como lista de dicts desde el formulario
 
-        cliente_id = data.get('cliente_id')
-        productos = data.get('productos')  # esperado como lista de dicts desde el formulario
-
-        if not cliente_id or not productos:
-            flash('Debes seleccionar un cliente y al menos un producto', 'danger')
-            return redirect(url_for('sales.create_sale'))
-
-        empleado = Staff.query.filter_by(usuario_id=current_user.id_usuario).first()
-        if not empleado:
-            flash('No se encontró el vendedor asociado', 'danger')
-            return redirect(url_for('sales.create_sale'))
-
-        nueva_venta = Sale(
-            cliente_id=cliente_id,
-            empleado_id=empleado.id_empleado,
-            tienda_id=empleado.tienda_id,
-            total=0
-        )
-        db.session.add(nueva_venta)
-        db.session.flush()  # genera id_venta
-
-        total_venta = 0
-        for item in productos:
-            producto_id = item.get('producto_id')
-            cantidad = int(item.get('cantidad', 1))
-
-            producto = Product.query.get(producto_id)
-            if not producto:
-                db.session.rollback()
-                flash(f'Producto {producto_id} no encontrado', 'danger')
+            if not cliente_id or not productos_data:
+                flash('Debes seleccionar un cliente y al menos un producto', 'danger')
                 return redirect(url_for('sales.create_sale'))
 
-            if producto.stock < cantidad:
-                db.session.rollback()
-                flash(f'Stock insuficiente para {producto.nombre}', 'danger')
+            empleado = Staff.query.filter_by(usuario_id=current_user.id_usuario).first()
+            if not empleado:
+                flash('No se encontró el vendedor asociado', 'danger')
                 return redirect(url_for('sales.create_sale'))
 
-            subtotal = producto.precio * cantidad
-            total_venta += subtotal
-
-            venta_producto = SaleProduct(
-                id_venta=nueva_venta.id_venta,
-                id_producto=producto_id,
-                cantidad=cantidad,
-                subtotal=subtotal
+            nueva_venta = Sale(
+                cliente_id =cliente_id,
+                empleado_id=empleado.id_empleado,
+                tienda_id=empleado.tienda_id,
+                total=0
             )
-            db.session.add(venta_producto)
+            db.session.add(nueva_venta)
+            db.session.flush()  # genera id_venta
 
-            producto.stock -= cantidad
+            total_venta = 0
+            for item in productos:
+                producto_id = item.get('producto_id')
+                cantidad = int(item.get('cantidad', 1))
 
-        nueva_venta.total = total_venta
+                producto = Product.query.get(producto_id)
+                if not producto:
+                    db.session.rollback()
+                    flash(f'Producto {producto_id} no encontrado', 'danger')
+                    return redirect(url_for('sales.create_sale'))
 
-        factura = Invoice(
-            venta_id=nueva_venta.id_venta,
-            total=total_venta
-        )
-        db.session.add(factura)
+                if producto.stock < cantidad:
+                    db.session.rollback()
+                    flash(f'Stock insuficiente para {producto.nombre}', 'danger')
+                    return redirect(url_for('sales.create_sale'))
 
-        db.session.commit()
+                venta_producto = SaleProduct(
+                    id_venta=nueva_venta.id_venta,
+                    id_producto=producto_id,
+                    cantidad=cantidad,
+                    precio_unitario=producto.precio
+                )
+                db.session.add(venta_producto)
 
-        flash('Venta y factura creadas exitosamente', 'success')
-        return redirect(url_for('sales.view_sale', sale_id=nueva_venta.id_venta))
+                producto.stock -= cantidad
+                total_venta += venta_producto.subtotal()
+
+            nueva_venta.total = total_venta
+
+            factura = Invoice(
+                venta_id=nueva_venta.id_venta,
+                total=total_venta
+            )
+            db.session.add(factura)
+
+            db.session.commit()
+            flash('Venta y factura creadas exitosamente', 'success')
+            return redirect(url_for('sales.view_sale', sale_id=nueva_venta.id_venta))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear venta: {str(e)}', 'danger')
 
     clientes = Client.get_activos().all()
     productos = Product.get_activos().filter(Product.stock > 0).all()
@@ -133,29 +134,28 @@ def add_product_to_sale(sale_id):
     form = SaleProductForm()
 
     if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
-
-        producto = Product.query.get(data['id_producto'])
+       
+        producto = Product.query.get(['id_producto'])
         if not producto:
             flash('Producto no encontrado', 'danger')
             return redirect(url_for('sales.view_sale', sale_id=sale_id))
 
-        if producto.stock < data['cantidad']:
+        if producto.stock < ['cantidad']:
             flash(f'Stock insuficiente para {producto.nombre}', 'danger')
             return redirect(url_for('sales.view_sale', sale_id=sale_id))
 
-        subtotal = producto.precio * data['cantidad']
+        subtotal = producto.precio * ['cantidad']
 
         venta_producto = SaleProduct(
             id_venta=venta.id_venta,
             id_producto=producto.id_producto,
-            cantidad=data['cantidad'],
+            cantidad=['cantidad'],
             subtotal=subtotal
         )
         db.session.add(venta_producto)
 
         # Actualizamos stock y totales
-        producto.stock -= data['cantidad']
+        producto.stock -= ['cantidad']
         venta.total += subtotal
         venta.factura.total = venta.total  # sincronizamos la factura
 
@@ -191,7 +191,7 @@ def create_invoice(sale_id):
 
         nueva_factura = Invoice(
             venta_id=venta.id_venta,
-            total=data.get('total', venta.total)
+            total=Invoice.query.get('total', venta.total)
         )
         db.session.add(nueva_factura)
         db.session.commit()

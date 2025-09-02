@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL,
     direccion TEXT,
-    telefono TEXT UNIQUE,
+    telefono TEXT,
     activo INTEGER DEFAULT 1,
     fecha_eliminacion TEXT,
     ciudad_id INTEGER,
@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS personal (
 CREATE TABLE IF NOT EXISTS productos (
     id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL,
+    categoria TEXT NOT NULL,
     descripcion TEXT,
     precio REAL NOT NULL,
     stock INTEGER DEFAULT 0,

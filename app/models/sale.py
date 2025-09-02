@@ -26,22 +26,27 @@ class Sale(db.Model):
     # --- Métodos de negocio ---
     def calcular_total(self):
         """Recalcula el total de la venta sumando los subtotales de productos."""
-        self.total = sum([p.subtotal() for p in self.productos if p.activo])
+        total = 0
+        for producto_venta in self.productos:
+            total += producto_venta.precio_unitario * producto_venta.cantidad
+            
+        self.total = total
         return self.total
+        
 
     def anular(self):
         """Anula la venta y desactiva sus productos asociados."""
         self.estado = 'anulada'
         self.activo = False
-        for p in self.productos:
-            p.activo = False
+        for producto_venta in self.productos:
+            producto_venta.activo = False
 
     def activar(self):
         """Reactiva una venta anulada (si aplica)."""
         self.estado = 'activa'
         self.activo = True
-        for p in self.productos:
-            p.activo = True
+        for producto_venta in self.productos:
+            producto_venta.activo = True
     
     def __repr__(self):
         return f'<Venta {self.id_venta} - Total: {self.total}>'

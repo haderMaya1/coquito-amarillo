@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError
 from app.models import Client, City, ClientOrder, ClientOrderProduct, Product
 from app.forms import ClienteForm, ClientOrderForm, ClientOrderProductForm, ConfirmDeleteForm
 from app.utils.decorators import admin_required, seller_required
-from app.utils.security import sanitize_form_data
 
 clients_bp = Blueprint('clients', __name__)
 
@@ -38,15 +37,13 @@ def create_client():
             if Client.query.filter_by(telefono=form.telefono.data).first():
                 flash('El teléfono ya está registrado', 'danger')
                 return redirect(url_for('clients.create_client'))
-
-            sanitize_data = sanitize_form_data(form.data)
             
             nuevo_cliente = Client(
-                nombre = sanitize_data['nombre'],
-                direccion = sanitize_data['direccion'],
-                telefono = sanitize_data['telefono'],
-                ciudad_id = sanitize_data['ciudad_id'],
-                activo = sanitize_data['activo']
+                nombre = form.nombre.data,
+                direccion = form.direccion.data,
+                telefono = form.telefono.data,
+                ciudad_id = form.ciudad_id.data,
+                activo = form.activo.data
             )
             
             db.session.add(nuevo_cliente)
@@ -74,13 +71,11 @@ def edit_client(client_id):
     
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
-            
-            client.nombre = sanitize_data['nombre']
-            client.direccion = sanitize_data['direccion']
-            client.telefono = sanitize_data['telefono']
-            client.ciudad_id = sanitize_data['ciudad_id']
-            client.activo = sanitize_data['activo']
+            client.nombre = form.nombre.data
+            client.direccion = form.direccion.data
+            client.telefono = form.telefono.data
+            client.ciudad_id = form.ciudad_id.data
+            client.activo = form.activo.data
             
             if Client.query.filter(Client.nombre == form.nombre.data, Client.id_cliente != client.id_cliente).first():
                 flash('El nombre ya está registrado en otro cliente', 'danger')
@@ -157,11 +152,10 @@ def create_client_order(client_id):
     form = ClientOrderForm()
 
     if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
 
         nueva_orden = ClientOrder(
             cliente_id=cliente.id_cliente,
-            estado=data.get('estado', 'pendiente')
+            estado=ClientOrder.query.get('estado', 'pendiente')
         )
         db.session.add(nueva_orden)
         db.session.commit()
@@ -187,14 +181,13 @@ def add_product_to_order(order_id):
     form = ClientOrderProductForm()
 
     if form.validate_on_submit():
-        data = sanitize_form_data(form.data)
 
-        producto = Product.query.get(data.get('id_producto'))
+        producto = Product.query.get(('id_producto'))
         if not producto:
             flash('Producto no encontrado', 'danger')
             return redirect(url_for('clients.view_client_order', order_id=orden.id_orden_cliente))
 
-        cantidad = data.get('cantidad', 1)
+        cantidad = ClientOrder.query.get('cantidad', 1)
         if producto.stock < cantidad:
             flash('Stock insuficiente', 'danger')
             return redirect(url_for('clients.view_client_order', order_id=orden.id_orden_cliente))

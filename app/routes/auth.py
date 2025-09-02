@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
 from app.models import User, Role
-from app.forms import LoginForm, RegisterForm, ChangePasswordForm
+from app.forms import LoginForm, RegisterForm, ChangePasswordForm, ProfileForm
 from app.utils.decorators import admin_required, login_required
-from app.utils.security import sanitize_form_data, sanitize_input
+from app.utils.security import sanitize_form_data
 from app import bcrypt, db
-import json
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -18,10 +18,8 @@ def login():
     
     if form.validate_on_submit():
         try:
-            # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            email = sanitized_data['email']
-            password = sanitized_data['password']
+            email = form.email.data.strip()
+            password = form.password.data
             
             user = User.query.filter_by(email=email).first()
             
@@ -56,7 +54,10 @@ def login():
             else:
                 # No revelar si el email existe o no por seguridad
                 flash('Credenciales incorrectas', 'danger')
-        
+                
+        except SQLAlchemyError as e:
+            flash('Error en la base de datos durante el inicio de sesión', 'danger')
+            
         except Exception as e:
             flash(f'Error durante el inicio de sesión: {str(e)}', 'danger')
     
@@ -86,11 +87,11 @@ def register():
     if form.validate_on_submit():
         try:
             # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            nombre = sanitized_data['nombre']
-            email = sanitized_data['email']
-            password = sanitized_data['password']
-            rol_id = sanitized_data['rol_id']
+            
+            nombre = form.nombre.data.strip()
+            email = form.email.data.strip().lower()
+            password = form.password.data
+            rol_id = form.rol_id.data
             
             # Verificar si el usuario ya existe
             if User.query.filter_by(email=email).first():
@@ -111,6 +112,13 @@ def register():
             flash('Usuario registrado exitosamente', 'success')
             return redirect(url_for('admin.dashboard'))
         
+        except IntegrityError:
+            db.session.rollback()
+            flash('Error de base de datos al registrar usuario', 'danger')
+            
+        except SQLAlchemyError as e:
+            flash('Error en la base de datos durante el inicio de sesión', 'danger')
+            
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar usuario: {str(e)}', 'danger')
@@ -130,11 +138,9 @@ def change_password():
     
     if form.validate_on_submit():
         try:
-            # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            current_password = sanitized_data['current_password']
-            new_password = sanitized_data['new_password']
-            confirm_password = sanitized_data['confirm_password']
+            current_password = form.current_password.data
+            new_password = form.new_password.data
+            confirm_password = form.confirm_password.data
             
             # Verificar que la contraseña actual sea correcta
             if not current_user.check_password(current_password):
@@ -153,6 +159,9 @@ def change_password():
             flash('Contraseña actualizada exitosamente', 'success')
             return redirect(url_for('dashboard.dashboard'))
         
+        except SQLAlchemyError as e:
+            flash('Error en la base de datos durante el inicio de sesión', 'danger')
+            
         except Exception as e:
             db.session.rollback()
             flash(f'Error al cambiar la contraseña: {str(e)}', 'danger')
@@ -174,21 +183,25 @@ def forgot_password():
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    from app.forms import ProfileForm
-    
     form = ProfileForm(obj=current_user)
     
     if form.validate_on_submit():
         try:
             # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            
-            current_user.nombre = sanitized_data['nombre']
-            current_user.email = sanitized_data['email']
+            current_user.nombre = form.nombre.data.strip()
+            current_user.email = form.email.data.strip().lower
             
             db.session.commit()
             flash('Perfil actualizado exitosamente', 'success')
             return redirect(url_for('auth.profile'))
+        
+        except IntegrityError:
+            db.session.rollback()
+            flash('El email ya está registrado por otro usuario', 'danger')
+        
+        except SQLAlchemyError:
+            db.session.rollback()
+            flash('Error de base de datos al actualizar perfil', 'danger')
         
         except Exception as e:
             db.session.rollback()

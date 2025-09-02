@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, jsonify, request, flash
-from flask_login import login_required, current_user
 from app.models import Product, Sale, Client, Staff, Store, Supplier, User, SupplierOrder
 from app.forms import DateRangeForm, SalesFilterForm, QuickStatsForm
-from app.utils.decorators import login_required, roles_required
+from app.utils.decorators import login_required, roles_required, current_user
 from app import db
 from datetime import datetime, timedelta
 import json
@@ -14,13 +13,17 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def dashboard():
     """Panel de control principal con estadísticas adaptadas al rol del usuario"""
     try:
+        #Obtener fecha de hoy(sin hora)
+        today = datetime.utcnow().date()
+        today_start = datetime(today.year, today.month, today.day)
+        
         # Estadísticas básicas para todos los roles
         stats = {
-            'total_products': Product.get_activos().count(),
+            'total_products': Product.get_activos(activo=True).count(),
             'total_sales_today': Sale.query.filter(
-                Sale.fecha_venta >= datetime.utcnow().date()
+                Sale.fecha_venta >= today_start
             ).count(),
-            'total_clients': Client.get_activos().count(),
+            'total_clients': Client.get_activos(activo=True).count(),
         }
 
         # Estadísticas específicas según el rol

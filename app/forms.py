@@ -78,6 +78,11 @@ class ProductForm(BaseForm):
         Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
     ])
     
+    categoria = StringField('Categoria', validators=[
+        DataRequired(message='La categoria es requerida'),
+        Length(min=2, max=100, message='Debe tener entre 2 y 100 caracteres')
+    ])
+    
     descripcion = StringField('Descripcion', validators=[
         Optional(),
         Length(min=2, max=255, message='Debe tener entre 2 a 150 caracteres')

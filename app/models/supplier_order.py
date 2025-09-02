@@ -24,11 +24,14 @@ class SupplierOrder(db.Model):
             for item in self.productos:
                 producto = item.producto
                 producto.stock += item.cantidad
+                
+            db.session.commit()
    
     def cancelar_orden(self):
         """Cancela la orden si aún está pendiente"""
         if self.estado == 'pendiente':
             self.estado = 'cancelada'
+            db.session.commit()
             
     def __repr__(self):
         return f'<OrdenProveedor {self.id_orden_proveedor}>'

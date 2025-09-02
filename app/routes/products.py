@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Product, Supplier, Invoice, Sale
+from app.models import Product, Supplier
 from sqlalchemy.exc import IntegrityError
-from app.forms import ProductForm, ConfirmDeleteForm, StockForm, InvoiceForm, SaleForm
-from app.utils.security import sanitize_form_data
+from app.forms import ProductForm, StockForm
 from app.utils.decorators import admin_required, seller_required
+from datetime import datetime
 
 products_bp = Blueprint('products', __name__)
 
@@ -47,24 +47,23 @@ def list_products():
 @admin_required
 def create_product():
     form = ProductForm()
-    form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.query.all()]
+    form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.query.order_by(Supplier.nombre).all()]
     
     # if not nombre or not precio or not proveedor_id:
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
-            
             nuevo_producto = Product(
-                nombre = sanitize_data['nombre'],
-                descripcion = sanitize_data['descripcion'],
-                precio = sanitize_data['precio'],
-                stock =  sanitize_data['stock'],
-                proveedor_id = sanitize_data['proveedor_id'],
-                activo = sanitize_data['activo']
+                nombre = form.nombre.data.strip(),
+                categoria = form.categoria.data,
+                descripcion = form.descripcion.data,
+                precio = form.precio.data,
+                stock = form.stock.data,
+                proveedor_id = form.proveedor_id.data,
+                activo = form.activo.data
             )
             
             if not form.activo.data:
-                nuevo_producto.fecha_eliminacion = form.fecha_eliminacion.data
+                nuevo_producto.fecha_eliminacion = datetime.utcnow()
             else:
                 nuevo_producto.fecha_eliminacion = None
         
@@ -97,25 +96,25 @@ def view_product(product_id):
 @login_required
 @admin_required
 def edit_product(product_id):
-    form = ProductForm()
+    producto = Product.query.get_or_404(product_id)
+    form = ProductForm(obj=producto)
     
-    form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.query.all()]
-    actualizar_producto = Product.query.get_or_404(product_id)
+    form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.query.order_by(Supplier.nombre).all()]
     
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
-            
-            actualizar_producto.nombre = sanitize_data['nombre']
-            actualizar_producto.descripcion = sanitize_data['descripcion']
-            actualizar_producto.precio = sanitize_data['precio']
-            actualizar_producto.stock = sanitize_data['stock']
-            actualizar_producto.proveedor_id = sanitize_data['proveedor_id']
+            producto.nombre = form.nombre.data.strip()
+            producto.categoria = form.categoria.data
+            producto.descripcion = form.descripcion.data
+            producto.precio = form.precio.data
+            producto.stock = form.stock.data
+            producto.proveedor_id = form.proveedor_id.data
+            producto.activo = form.activo.data
             
             if not form.activo.data:
-                actualizar_producto.fecha_eliminacion = form.fecha_eliminacion.data
+                producto.fecha_eliminacion = datetime.utcnow()
             else:
-                actualizar_producto.fecha_eliminacion = None
+                producto.fecha_eliminacion = None
                 
             db.session.commit()
             flash('Producto actualizado exitosamente', 'success')
@@ -125,33 +124,38 @@ def edit_product(product_id):
             db.session.rollback()
             flash(f'Error al actualizar: {str(e)}', 'error')
         
-    return render_template('products/edit.html', producto=actualizar_producto, form=form)
+    return render_template('products/edit.html', producto=producto, form=form)
 
 @products_bp.route('/<int:product_id>/delete', methods=['POST'])
 @login_required
 @admin_required
 def delete_product(product_id):
-    product = Product.query.get_or_404(product_id)
-    
-    #Soft delete
-    product.desactivar()
-    
-    flash('Producto eliminado exitosamente', 'success')
+    try:
+        product = Product.query.get_or_404(product_id)
+        product.activo = False
+        product.fecha_eliminacion = datetime.uctnow()
+        db.session.commit()
+        flash('Producto eliminado exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al desactivar producto: {str(e)}', 'danger')
+        
     return redirect(url_for('products.list_products'))
 
 @products_bp.route('/<int:product_id>/activate', methods=['POST'])
 @login_required
 @admin_required
 def activate_product(product_id):
-    product = Product.query.get_or_404(product_id)
-    
     try:
-        # Reactivar producto
-        product.activar()
+        product = Product.query.get_or_404(product_id)
+        product.activo = True
+        product.fecha_eliminacion = None
+        db.session.commit()
         flash('Producto reactivado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al activar el producto: {str(e)}', 'danger')
+        
     return redirect(url_for('products.list_products'))
 
 @products_bp.route('/<int:product_id>/stock', methods=['GET', 'POST'])
@@ -162,19 +166,25 @@ def update_stock(product_id):
     form = StockForm()
 
     if form.validate_on_submit():
-        accion = form.accion.data
-        cantidad = form.cantidad.data
+        try:
+            accion = form.accion.data
+            cantidad = form.cantidad.data
 
-        if accion == 'aumentar':
-            product.aumentar_stock(cantidad)
-            flash(f'Stock aumentado en {cantidad} unidades', 'success')
-        elif accion == 'reducir':
-            if product.reducir_stock(cantidad):
-                flash(f'Stock reducido en {cantidad} unidades', 'success')
-            else:
-                flash('No hay suficiente stock para reducir', 'danger')
+            if accion == 'aumentar':
+                product.aumentar_stock(cantidad)
+                flash(f'Stock aumentado en {cantidad} unidades', 'success')
+            elif accion == 'reducir':
+                if product.reducir_stock(cantidad):
+                    flash(f'Stock reducido en {cantidad} unidades', 'success')
 
-        return redirect(url_for('products.list_products'))
+            db.session.commit()
+            return redirect(url_for('product.list_prodcut', product_id=product.id_producto))
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar: {str(e)}', 'danger')
 
     return render_template('products/stock.html', form=form, product=product)
 
@@ -182,11 +192,16 @@ def update_stock(product_id):
 @login_required
 def api_inventory():
     # API para consultar inventario (útil para AJAX)
-    productos = Product.query.all()
-    return jsonify([{
-        'id': p.id_producto,
-        'nombre': p.nombre,
-        'stock': p.stock,
-        'precio': float(p.precio),
-        'activo': p.activo
-    } for p in productos])
+    try:
+        productos = Product.query.filter_by(activo=True).all()
+        return jsonify([{
+            'id': p.id_producto,
+            'nombre': p.nombre,
+            'categoria': p.categoria,
+            'stock': p.stock,
+            'precio': float(p.precio),
+            'activo': p.activo
+        } for p in productos])
+    except ExceptionGroup as e:
+        return jsonify({'error': str(e)}), 500
+    

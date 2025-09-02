@@ -8,7 +8,7 @@ class Client(db.Model):
     id_cliente = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     direccion = db.Column(db.String(150))
-    telefono = db.Column(db.String(50), unique=True)
+    telefono = db.Column(db.String(50))
     ciudad_id = db.Column(db.Integer, db.ForeignKey('ciudades.id_ciudad'))
     activo = db.Column(db.Boolean, default=True)
     fecha_eliminacion = db.Column(db.DateTime)

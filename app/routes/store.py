@@ -4,7 +4,7 @@ from app import db
 from app.models import Store, City
 from app.forms import StoreForm
 from app.utils.decorators import admin_required
-from app.utils.security import sanitize_form_data
+from datetime import datetime
 
 store_bp = Blueprint('store', __name__)
 
@@ -14,7 +14,7 @@ store_bp = Blueprint('store', __name__)
 @login_required
 @admin_required
 def list_stores():
-    mostrar_inactivas = request.args.get('mostrar_inactivas', False)
+    mostrar_inactivas = request.args.get('mostrar_inactivas', False, type=bool)
     
     if mostrar_inactivas:
         stores = Store.get_todas().all()
@@ -34,13 +34,10 @@ def create_store():
 
     if form.validate_on_submit():
         try:
-            # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            
             nueva_tienda = Store(
-                nombre=sanitized_data['nombre'],
-                direccion=sanitized_data['direccion'],
-                ciudad_id=sanitized_data['ciudad_id']
+                nombre=form.nombre.data.strip(),
+                direccion=form.direccion.data,
+                ciudad_id=form.ciudad_id.data
             )
             
             db.session.add(nueva_tienda)
@@ -67,12 +64,9 @@ def edit_store(store_id):
 
     if form.validate_on_submit():
         try:
-            # Sanitizar los datos del formulario
-            sanitized_data = sanitize_form_data(form.data)
-            
-            tienda.nombre = sanitized_data['nombre']
-            tienda.direccion = sanitized_data['direccion']
-            tienda.ciudad_id = sanitized_data['ciudad_id']
+            tienda.nombre = form.nombre.data
+            tienda.direccion = form.direccion.data
+            tienda.ciudad_id = form.ciudad_id.data
             
             db.session.commit()
             flash('Tienda actualizada exitosamente', 'success')
@@ -91,9 +85,12 @@ def delete_store(store_id):
     tienda = Store.query.get_or_404(store_id)
     
     try:
-        tienda.desactivar()
+        tienda.activo = False
+        tienda.fecha_eliminacion = datetime.utcnow()
+        db.session.commit()
         flash('Tienda desactivada exitosamente', 'success')
     except Exception as e:
+        db.session.rollback()
         flash(f'Error al desactivar tienda: {str(e)}', 'error')
     
     return redirect(url_for('store.list_stores'))
@@ -105,9 +102,12 @@ def activate_store(store_id):
     tienda = Store.query.get_or_404(store_id)
     
     try:
-        tienda.activar()
+        tienda.activo = True
+        tienda.fecha_eliminacion = None
+        db.session.commit()
         flash('Tienda reactivada exitosamente', 'success')
     except Exception as e:
+        db.session.rollback()
         flash(f'Error al reactivar tienda: {str(e)}', 'error')
     
     return redirect(url_for('store.list_stores'))
@@ -119,6 +119,6 @@ def view_store(store_id):
     tienda = Store.query.get_or_404(store_id)
     
     # Obtener el personal activo de esta tienda
-    personal_activo = tienda.obtener_personal_activo()
+    personal_activo = [empleado for empleado in tienda.personal if empleado.activo]
     
     return render_template('stores/detail.html', tienda=tienda, personal_activo=personal_activo)

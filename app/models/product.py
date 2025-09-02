@@ -7,6 +7,7 @@ class Product(db.Model):
     
     id_producto = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
+    categoria = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.Text)
     precio = db.Column(db.Numeric(10, 2), nullable=False)
     stock = db.Column(db.Integer, default=0)
@@ -30,10 +31,10 @@ class Product(db.Model):
         """Reduce el stock del producto si hay suficiente disponibilidad"""
         if cantidad <= 0:
             raise ValueError("La cantidad a reducir debe ser mayor a 0")
-        if self.stock >= cantidad:
-            self.stock -= cantidad
-            return True
-        return False
+        if self.stock < cantidad:
+            raise ValueError('No hay suficiente stock disponible')    
+        self.stock -= cantidad
+        return True
     
     def desactivar(self):
         """Marca el producto como inactivo (soft delete)"""

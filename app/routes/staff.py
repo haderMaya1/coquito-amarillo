@@ -5,6 +5,7 @@ from app.models import Staff, Store, City, User, Supplier
 from app.forms import StaffForm
 from app.utils.security import sanitize_form_data
 from app.utils.decorators import admin_required
+from sqlalchemy.exc import SQLAlchemyError
 
 staff_bp = Blueprint('staff', __name__)
 
@@ -32,7 +33,7 @@ def create_staff():
     # Cargar opciones para los campos de selección
     form.ciudad_id.choices = [(c.id_ciudad, c.nombre) for c in City.query.all()]
     form.tienda_id.choices = [(-1, '-- Seleccione una tienda --')] + [(t.id_tienda, t.nombre) for t in Store.get_activas().all()]
-    form.usuario_id.choices = [(-1, '-- Seleccione un usuario --')] + [(u.id_usuario, u.username) for u in User.query.filter(User.empleado == None).all()]
+    form.usuario_id.choices = [(-1, '-- Seleccione un usuario --')] + [(u.id_usuario, u.nombre) for u in User.query.filter(User.empleado == None).all()]
     form.proveedor_id.choices = [(-1, '-- Seleccione un proveedor --')] + [(p.id_proveedor, p.nombre) for p in Supplier.get_activos().all()]
 
     if form.validate_on_submit():
@@ -65,7 +66,9 @@ def create_staff():
             
             flash('Empleado creado exitosamente', 'success')
             return redirect(url_for('staff.list_staff'))
-        
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            flash(f'Error de base de datos al crear empleado: {str(e)}', 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear empleado: {str(e)}', 'error')
@@ -82,7 +85,7 @@ def edit_staff(staff_id):
     # Cargar opciones para los campos de selección
     form.ciudad_id.choices = [(c.id_ciudad, c.nombre) for c in City.query.all()]
     form.tienda_id.choices = [(-1, '-- Ninguna --')] + [(t.id_tienda, t.nombre) for t in Store.get_activas().all()]
-    form.usuario_id.choices = [(-1, '-- Ninguno --')] + [(u.id_usuario, u.username) for u in User.query.all()]
+    form.usuario_id.choices = [(-1, '-- Ninguno --')] + [(u.id_usuario, u.nombre) for u in User.query.all()]
     form.proveedor_id.choices = [(-1, '-- Ninguno --')] + [(p.id_proveedor, p.nombre) for p in Supplier.get_activas().all()]
     
     # Ajustar valores actuales para los selects
@@ -117,6 +120,9 @@ def edit_staff(staff_id):
             flash('Empleado actualizado exitosamente', 'success')
             return redirect(url_for('staff.list_staff'))
         
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            flash(f'Error de base de datos al editar empleado: {str(e)}', 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al actualizar empleado: {str(e)}', 'error')
@@ -146,6 +152,10 @@ def activate_staff(staff_id):
     try:
         empleado.activar()
         flash('Empleado reactivado exitosamente', 'success')
+    
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash(f'Error de base de datos al activate empleado: {str(e)}', 'error')    
     except Exception as e:
         flash(f'Error al reactivar empleado: {str(e)}', 'error')
     

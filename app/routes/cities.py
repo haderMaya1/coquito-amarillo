@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from app.models import City
 from app.forms import CiudadForm
 from app.utils.decorators import admin_required
-from app.utils.security import sanitize_form_data
+from datetime import datetime
 
 cities_bp = Blueprint('cities', __name__)
 
@@ -23,14 +23,12 @@ def create_city():
     form = CiudadForm()
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
-
             # Verificar duplicado
-            if City.query.filter_by(nombre=sanitize_data['nombre']).first():
+            if City.query.filter_by(nombre=form.nombre.data).first():
                 flash('La ciudad ya existe', 'danger')
                 return redirect(url_for('cities.create_city'))
 
-            nueva_ciudad = City(nombre=sanitize_data['nombre'])
+            nueva_ciudad = City(nombre=form.nombre.data.strip())
             db.session.add(nueva_ciudad)
             db.session.commit()
 
@@ -39,7 +37,7 @@ def create_city():
 
         except IntegrityError:
             db.session.rollback()
-            flash('Error: Violación de integridad en base de datos', 'danger')
+            flash('Error: Violación de integridad en base de datos, la ciudad ya existe', 'danger')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear la ciudad: {str(e)}', 'danger')
@@ -55,14 +53,12 @@ def edit_city(city_id):
 
     if form.validate_on_submit():
         try:
-            sanitize_data = sanitize_form_data(form.data)
-
             # Verificar duplicado en otro registro
-            if City.query.filter(City.id_ciudad != ciudad.id_ciudad, City.nombre == sanitize_data['nombre']).first():
+            if City.query.filter(City.id_ciudad != ciudad.id_ciudad, City.nombre == form.nombre.data).first():
                 flash('Ya existe una ciudad con ese nombre', 'danger')
                 return redirect(url_for('cities.edit_city', city_id=city_id))
 
-            ciudad.nombre = sanitize_data['nombre']
+            ciudad.nombre = form.nombre.data.strip()
             db.session.commit()
 
             flash('Ciudad actualizada exitosamente', 'success')
@@ -70,7 +66,7 @@ def edit_city(city_id):
 
         except IntegrityError:
             db.session.rollback()
-            flash('Error: Violación de integridad en base de datos', 'danger')
+            flash('Error: Violación de integridad en base de datos, la ciudad ya existe', 'danger')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al editar la ciudad: {str(e)}', 'danger')
@@ -82,9 +78,14 @@ def edit_city(city_id):
 @admin_required
 def delete_city(city_id):
     ciudad = City.query.get_or_404(city_id)
-
+    
+    has_relationships = (ciudad.tiendas.count() > 0 or
+                         ciudad.clientes.count() > 0 or
+                         ciudad.proveedores.count() > 0 or
+                         ciudad.personal.count() > 0
+                         )
     # Verificar relaciones
-    if ciudad.tiendas or ciudad.clientes or ciudad.proveedores or ciudad.personal:
+    if has_relationships:
         flash('No se puede eliminar la ciudad porque está siendo utilizada', 'danger')
         return redirect(url_for('cities.list_cities'))
 
