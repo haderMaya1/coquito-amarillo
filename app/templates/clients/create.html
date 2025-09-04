@@ -10,31 +10,39 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('clients.create_client') }}">
+                        {{ form.hidden_tag() }}
+                        
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre *</label>
-                            <input type="text" id="nombre" name="nombre" class="form-control" required>
+                            {{ form.nombre.label(class="form-label") }}
+                            {{ form.nombre(class="form-control", placeholder="Nombre completo") }}
                         </div>
+                        
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección</label>
-                            <textarea id="direccion" name="direccion" class="form-control" rows="3"></textarea>
+                            {{ form.direccion.label(class="form-label") }}
+                            {{ form.direccion(class="form-control", rows="3", placeholder="Dirección") }}
                         </div>
+                        
                         <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono *</label>
-                            <input type="text" id="telefono" name="telefono" class="form-control" required>
+                            {{ form.telefono.label(class="form-label") }}
+                            {{ form.telefono(class="form-control", placeholder="Teléfono de contacto") }}
                         </div>
+                        
                         <div class="mb-3">
-                            <label for="ciudad_id" class="form-label">Ciudad</label>
-                            <select id="ciudad_id" name="ciudad_id" class="form-select">
-                                <option value="">Seleccionar ciudad</option>
-                                {% for ciudad in ciudades %}
-                                    <option value="{{ ciudad.id_ciudad }}">{{ ciudad.nombre }}</option>
-                                {% endfor %}
-                            </select>
+                            {{ form.ciudad_id.label(class="form-label") }}
+                            {{ form.ciudad_id(class="form-select") }}
                         </div>
+
+                        <div class="form-check mb-3">
+                            {{ form.activo(class="form-check-input") }}
+                            {{ form.activo.label(class="form-check-label") }}
+                        </div>
+                        
                         <button type="submit" class="btn btn-primary">Crear</button>
                         <a href="{{ url_for('clients.list_clients') }}" class="btn btn-secondary">Cancelar</a>
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

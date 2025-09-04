@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Gestión de Ciudades{% endblock %}
+{% block title %}Gestión de Tiendas{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Gestión de Ciudades</h2>
+    <h2>Gestión de Tiendas</h2>
     <div>
-      <a href="{{ url_for('cities.create_city') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Nueva Ciudad
+      <a href="{{ url_for('store.create_store') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nueva Tienda
       </a>
-      <a href="{{ url_for('cities.list_cities', mostrar_inactivas=not mostrar_inactivas) }}"
+      <a href="{{ url_for('store.list_stores', mostrar_inactivas=not mostrar_inactivas) }}"
          class="btn btn-{% if mostrar_inactivas %}warning{% else %}secondary{% endif %}">
         {% if mostrar_inactivas %}Ocultar Inactivas{% else %}Mostrar Inactivas{% endif %}
       </a>
@@ -24,47 +24,51 @@
             <tr>
               <th>ID</th>
               <th>Nombre</th>
+              <th>Dirección</th>
+              <th>Ciudad</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {% for ciudad in ciudades %}
-            <tr class="{% if not ciudad.activo %}table-secondary{% endif %}">
-              <td>{{ ciudad.id_ciudad }}</td>
-              <td>{{ ciudad.nombre }}</td>
+            {% for tienda in stores %}
+            <tr class="{% if not tienda.activo %}table-secondary{% endif %}">
+              <td>{{ tienda.id_tienda }}</td>
+              <td>{{ tienda.nombre }}</td>
+              <td>{{ tienda.direccion }}</td>
+              <td>{{ tienda.ciudad.nombre if tienda.ciudad else 'N/A' }}</td>
               <td>
-                <span class="badge {% if ciudad.activo %}bg-success{% else %}bg-secondary{% endif %}">
-                  {% if ciudad.activo %} Activa {% else %} Inactiva {% endif %}
+                <span class="badge {% if tienda.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if tienda.activo %} Activa {% else %} Inactiva {% endif %}
                 </span>
               </td>
               <td>
-                <a href="{{ url_for('cities.view_city', city_id=ciudad.id_ciudad) }}" class="btn btn-sm btn-info">
+                <a href="{{ url_for('store.view_store', store_id=tienda.id_tienda) }}" class="btn btn-sm btn-info">
                   <i class="bi bi-eye"></i> Ver
                 </a>
-                <a href="{{ url_for('cities.edit_city', city_id=ciudad.id_ciudad) }}" class="btn btn-sm btn-warning">
+                <a href="{{ url_for('store.edit_store', store_id=tienda.id_tienda) }}" class="btn btn-sm btn-warning">
                   <i class="bi bi-pencil"></i> Editar
                 </a>
 
-                {% if ciudad.activo %}
+                {% if tienda.activo %}
                   <!-- Formulario WTForms para desactivar -->
                   <form method="POST"
-                        action="{{ url_for('cities.delete_city', city_id=ciudad.id_ciudad) }}"
+                        action="{{ url_for('store.delete_store', store_id=tienda.id_tienda) }}"
                         class="d-inline">
                     {{ delete_form.hidden_tag() }}
                     <button type="submit" class="btn btn-sm btn-danger"
-                            onclick="return confirm('¿Desactivar esta ciudad?')">
+                            onclick="return confirm('¿Desactivar esta tienda?')">
                       <i class="bi bi-x-circle"></i> Desactivar
                     </button>
                   </form>
                 {% else %}
                   <!-- Formulario WTForms para activar -->
                   <form method="POST"
-                        action="{{ url_for('cities.activate_city', city_id=ciudad.id_ciudad) }}"
+                        action="{{ url_for('store.activate_store', store_id=tienda.id_tienda) }}"
                         class="d-inline">
                     {{ activate_form.hidden_tag() }}
                     <button type="submit" class="btn btn-sm btn-success"
-                            onclick="return confirm('¿Reactivar esta ciudad?')">
+                            onclick="return confirm('¿Reactivar esta tienda?')">
                       <i class="bi bi-check-circle"></i> Activar
                     </button>
                   </form>

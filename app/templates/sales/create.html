@@ -1,29 +1,31 @@
 {% extends "base.html" %}
 
+{% block title %}Nueva Venta{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-header">
-                    <h3>Nueva Venta</h3>
+                    <h3><i class="bi bi-cart-plus"></i> Nueva Venta</h3>
                 </div>
                 <div class="card-body">
-                    <form id="sale-form">
+                    <form method="POST" action="{{ url_for('sales.create_sale') }}">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Selección de Cliente -->
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="cliente_id" class="form-label">Cliente *</label>
-                                    <select id="cliente_id" name="cliente_id" class="form-select" required>
-                                        <option value="">Seleccionar cliente</option>
-                                        {% for cliente in clientes %}
-                                            <option value="{{ cliente.id_cliente }}">{{ cliente.nombre }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.cliente_id.label(class="form-label") }}
+                                {{ form.cliente_id(class="form-select", id="cliente_id") }}
+                                {% for error in form.cliente_id.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                         </div>
-                        
+
+                        <!-- Productos dinámicos -->
                         <h4 class="mt-4">Productos</h4>
                         <div id="productos-container">
                             <div class="row producto-row mb-2">
@@ -31,7 +33,9 @@
                                     <select class="form-select producto-select" required>
                                         <option value="">Seleccionar producto</option>
                                         {% for producto in productos %}
-                                            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}">
+                                            <option value="{{ producto.id_producto }}" 
+                                                    data-precio="{{ producto.precio }}" 
+                                                    data-stock="{{ producto.stock }}">
                                                 {{ producto.nombre }} - ${{ producto.precio }} (Stock: {{ producto.stock }})
                                             </option>
                                         {% endfor %}
@@ -51,9 +55,12 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <button type="button" id="add-product" class="btn btn-secondary mt-3">Añadir Producto</button>
-                        
+
+                        <button type="button" id="add-product" class="btn btn-secondary mt-3">
+                            <i class="bi bi-plus-circle"></i> Añadir Producto
+                        </button>
+
+                        <!-- Total -->
                         <div class="row mt-4">
                             <div class="col-md-6 offset-md-6">
                                 <div class="d-flex justify-content-between">
@@ -61,11 +68,19 @@
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Botones -->
                         <div class="mt-4">
-                            <button type="button" id="submit-sale" class="btn btn-primary">Registrar Venta</button>
-                            <a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Registrar Venta
+                            </button>
+                            <a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
                         </div>
+
+                        <!-- Campo oculto para enviar los productos como JSON -->
+                        <input type="hidden" id="productos-json" name="productos">
                     </form>
                 </div>
             </div>
@@ -77,7 +92,6 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Función para calcular subtotales y total
     function calcularTotales() {
         let total = 0;
         document.querySelectorAll('.producto-row').forEach(row => {
@@ -99,10 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 subtotalInput.value = '';
             }
         });
-        
         document.getElementById('total-venta').textContent = total.toFixed(2);
     }
-    
+
     // Añadir producto
     document.getElementById('add-product').addEventListener('click', function() {
         const newRow = document.querySelector('.producto-row').cloneNode(true);
@@ -117,12 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('productos-container').appendChild(newRow);
         
-        // Agregar event listeners al nuevo row
         newRow.querySelector('.producto-select').addEventListener('change', calcularTotales);
         newRow.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
     });
-    
-    // Event listeners para el primer row
+
+    // Inicializar eventos en el primer producto
     document.querySelector('.producto-select').addEventListener('change', calcularTotales);
     document.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
     document.querySelector('.remove-product').addEventListener('click', function() {
@@ -131,61 +143,21 @@ document.addEventListener('DOMContentLoaded', function() {
             calcularTotales();
         }
     });
-    
-    // Enviar venta
-    document.getElementById('submit-sale').addEventListener('click', function() {
-        const clienteId = document.getElementById('cliente_id').value;
+
+    // Antes de enviar el formulario, construimos el JSON de productos
+    document.querySelector('form').addEventListener('submit', function(e) {
         const productos = [];
-        
-        let hasProducts = false;
         document.querySelectorAll('.producto-row').forEach(row => {
             const select = row.querySelector('.producto-select');
             const cantidadInput = row.querySelector('.cantidad-input');
-            
             if (select.value && cantidadInput.value) {
                 productos.push({
                     producto_id: parseInt(select.value),
                     cantidad: parseInt(cantidadInput.value)
                 });
-                hasProducts = true;
             }
         });
-        
-        if (!clienteId) {
-            alert('Debe seleccionar un cliente');
-            return;
-        }
-        
-        if (!hasProducts) {
-            alert('Debe añadir al menos un producto a la venta');
-            return;
-        }
-        
-        const data = {
-            cliente_id: parseInt(clienteId),
-            productos: productos
-        };
-        
-        fetch('{{ url_for("sales.create_sale") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                window.location.href = '{{ url_for("sales.list_sales") }}';
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al registrar la venta');
-        });
+        document.getElementById('productos-json').value = JSON.stringify(productos);
     });
 });
 </script>

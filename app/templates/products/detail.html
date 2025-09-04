@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
+        <div class="card shadow-sm">
             <div class="card-header">
                 <h2 class="card-title">
                     <i class="bi bi-box-seam"></i> {{ product.nombre }}
@@ -19,22 +19,10 @@
                     <div class="col-md-6">
                         <h5>Información del Producto</h5>
                         <table class="table table-borderless">
-                            <tr>
-                                <th>ID:</th>
-                                <td>{{ product.id_producto }}</td>
-                            </tr>
-                            <tr>
-                                <th>Nombre:</th>
-                                <td>{{ product.nombre }}</td>
-                            </tr>
-                            <tr>
-                                <th>Descripción:</th>
-                                <td>{{ product.descripcion or 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Precio:</th>
-                                <td>${{ product.precio }}</td>
-                            </tr>
+                            <tr><th>ID:</th><td>{{ product.id_producto }}</td></tr>
+                            <tr><th>Nombre:</th><td>{{ product.nombre }}</td></tr>
+                            <tr><th>Descripción:</th><td>{{ product.descripcion or 'N/A' }}</td></tr>
+                            <tr><th>Precio:</th><td>${{ product.precio }}</td></tr>
                         </table>
                     </div>
                     <div class="col-md-6">
@@ -48,14 +36,8 @@
                                     </span>
                                 </td>
                             </tr>
-                            <tr>
-                                <th>Proveedor:</th>
-                                <td>{{ product.proveedor.nombre if product.proveedor else 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Contacto:</th>
-                                <td>{{ product.proveedor.contacto if product.proveedor and product.proveedor.contacto else 'N/A' }}</td>
-                            </tr>
+                            <tr><th>Proveedor:</th><td>{{ product.proveedor.nombre if product.proveedor else 'N/A' }}</td></tr>
+                            <tr><th>Contacto:</th><td>{{ product.proveedor.contacto if product.proveedor and product.proveedor.contacto else 'N/A' }}</td></tr>
                             <tr>
                                 <th>Estado:</th>
                                 <td>
@@ -67,36 +49,36 @@
                         </table>
                     </div>
                 </div>
-                
+
                 {% if not product.activo %}
                 <div class="alert alert-warning mt-3">
                     <i class="bi bi-exclamation-triangle"></i> Este producto está desactivado y no está disponible para ventas.
                 </div>
                 {% endif %}
-                
+
                 <div class="mt-4">
                     {% if current_user.rol.nombre == 'Administrador' %}
-                    <a href="{{ url_for('products.edit_product', product_id=product.id_producto) }}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Editar
-                    </a>
-                    
-                    {% if product.activo %}
-                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                        <i class="bi bi-trash"></i> Desactivar
-                    </button>
-                    {% else %}
-                    <form action="{{ url_for('products.activate_product', product_id=product.id_producto) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Activar
+                        <a href="{{ url_for('products.edit_product', product_id=product.id_producto) }}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+
+                        {% if product.activo %}
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Desactivar
                         </button>
-                    </form>
+                        {% else %}
+                        <form action="{{ url_for('products.activate_product', product_id=product.id_producto) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Activar
+                            </button>
+                        </form>
+                        {% endif %}
                     {% endif %}
-                    {% endif %}
-                    
+
                     <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#stockModal">
                         <i class="bi bi-plus-slash-minus"></i> Ajustar Stock
                     </button>
-                    
+
                     <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
@@ -104,13 +86,11 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
-        <!-- Información adicional o estadísticas -->
+        <!-- Información adicional -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title">Acciones Rápidas</h5>
-            </div>
+            <div class="card-header"><h5 class="card-title">Acciones Rápidas</h5></div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stockModal">
@@ -124,12 +104,10 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Historial de movimientos (futura implementación) -->
+
+        <!-- Historial -->
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Historial Reciente</h5>
-            </div>
+            <div class="card-header"><h5 class="card-title">Historial Reciente</h5></div>
             <div class="card-body">
                 <p class="text-muted">El historial de movimientos se mostrará aquí en futuras versiones.</p>
             </div>
@@ -137,12 +115,11 @@
     </div>
 </div>
 
-<!-- Modal para desactivar producto -->
+<!-- Modal Desactivar -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Desactivar Producto</h5>
+            <div class="modal-header"><h5 class="modal-title">Desactivar Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -159,26 +136,24 @@
     </div>
 </div>
 
-<!-- Modal para ajustar stock -->
+<!-- Modal Stock -->
 <div class="modal fade" id="stockModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Ajustar Stock - {{ product.nombre }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
             <form action="{{ url_for('products.update_stock', product_id=product.id_producto) }}" method="POST">
+                {{ form.hidden_tag() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajustar Stock - {{ product.nombre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Acción</label>
-                        <select name="accion" class="form-select" required>
-                            <option value="aumentar">Aumentar</option>
-                            <option value="reducir">Reducir</option>
-                        </select>
+                        {{ form.accion.label(class="form-label") }}
+                        {{ form.accion(class="form-select") }}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Cantidad</label>
-                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                        {{ form.cantidad.label(class="form-label") }}
+                        {{ form.cantidad(class="form-control", min="1") }}
                     </div>
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i> Stock actual: <strong>{{ product.stock }}</strong> unidades

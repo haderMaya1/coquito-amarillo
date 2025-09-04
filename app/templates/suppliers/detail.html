@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Detalles del Proveedor{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0"><i class="bi bi-truck"></i> Detalles del Proveedor</h4>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-4">ID:</dt>
+            <dd class="col-sm-8">{{ proveedor.id_proveedor }}</dd>
+
+            <dt class="col-sm-4">Nombre:</dt>
+            <dd class="col-sm-8">{{ proveedor.nombre }}</dd>
+
+            <dt class="col-sm-4">Contacto:</dt>
+            <dd class="col-sm-8">{{ proveedor.contacto }}</dd>
+
+            <dt class="col-sm-4">Ciudad:</dt>
+            <dd class="col-sm-8">{{ proveedor.ciudad.nombre if proveedor.ciudad else 'N/A' }}</dd>
+
+            <dt class="col-sm-4">Estado:</dt>
+            <dd class="col-sm-8">
+              <span class="badge {% if proveedor.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+              </span>
+            </dd>
+          </dl>
+
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            {% if proveedor.activo %}
+              <a href="{{ url_for('suppliers.edit_supplier', supplier_id=proveedor.id_proveedor) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <form method="POST" action="{{ url_for('suppliers.delete_supplier', supplier_id=proveedor.id_proveedor) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar este proveedor?')">
+                  <i class="bi bi-x-circle"></i> Desactivar
+                </button>
+              </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('suppliers.activate_supplier', supplier_id=proveedor.id_proveedor) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar este proveedor?')">
+                  <i class="bi bi-check-circle"></i> Activar
+                </button>
+              </form>
+            {% endif %}
+
+            <a href="{{ url_for('suppliers.list_suppliers') }}" class="btn btn-secondary">
+              <i class="bi bi-arrow-left-circle"></i> Volver
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Editar Tienda{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><h3>Editar Tienda</h3></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('store.edit_store', store_id=tienda.id_tienda) }}">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.nombre.label(class="form-label") }}
+            {{ form.nombre(class="form-control") }}
+            {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors[0] }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.direccion.label(class="form-label") }}
+            {{ form.direccion(class="form-control", rows=3) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form.ciudad_id.label(class="form-label") }}
+            {{ form.ciudad_id(class="form-select") }}
+          </div>
+
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <a href="{{ url_for('store.view_store', store_id=tienda.id_tienda) }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Tienda{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0"><i class="bi bi-shop"></i> {{ tienda.nombre }}</h2>
+        <div>
+          <a href="{{ url_for('store.edit_store', store_id=tienda.id_tienda) }}" class="btn btn-sm btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row mb-2">
+          <div class="col-sm-3 fw-bold">ID:</div>
+          <div class="col-sm-9">{{ tienda.id_tienda }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-3 fw-bold">Dirección:</div>
+          <div class="col-sm-9">{{ tienda.direccion or 'N/A' }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-3 fw-bold">Ciudad:</div>
+          <div class="col-sm-9">{{ tienda.ciudad.nombre if tienda.ciudad else 'N/A' }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-3 fw-bold">Estado:</div>
+          <div class="col-sm-9">
+            <span class="badge {% if tienda.activo %}bg-success{% else %}bg-secondary{% endif %}">
+              {% if tienda.activo %} Activa {% else %} Inactiva {% endif %}
+            </span>
+          </div>
+        </div>
+
+        {% if not tienda.activo %}
+        <div class="alert alert-warning mt-3">
+          <strong>Desactivada el:</strong>
+          {{ tienda.fecha_eliminacion.strftime('%d/%m/%Y %H:%M') if tienda.fecha_eliminacion else 'N/A' }}
+        </div>
+        {% endif %}
+
+        <div class="mt-4 d-flex gap-2">
+          {# Formulario WTForms para desactivar (POST) - espera delete_form en contexto #}
+          {% if tienda.activo %}
+          <form method="POST" action="{{ url_for('store.delete_store', store_id=tienda.id_tienda) }}">
+            {{ delete_form.hidden_tag() }}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar esta tienda?')">
+              <i class="bi bi-x-circle"></i> Desactivar
+            </button>
+          </form>
+          {% else %}
+          <form method="POST" action="{{ url_for('store.activate_store', store_id=tienda.id_tienda) }}">
+            {{ activate_form.hidden_tag() }}
+            <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar esta tienda?')">
+              <i class="bi bi-check-circle"></i> Activar
+            </button>
+          </form>
+          {% endif %}
+
+          <a href="{{ url_for('store.list_stores') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Activo -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-people"></i> Personal activo</h5>
+      </div>
+      <div class="card-body">
+        {% if personal_activo %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Cargo / Rol</th>
+                <th>Contacto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for empleado in personal_activo %}
+              <tr>
+                <td>{{ empleado.id_empleado }}</td>
+                <td>{{ empleado.nombre }}</td>
+                <td>{{ empleado.rol.nombre if empleado.rol else 'N/A' }}</td>
+                <td>{{ empleado.telefono if empleado.telefono else '—' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No hay personal activo en esta tienda.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

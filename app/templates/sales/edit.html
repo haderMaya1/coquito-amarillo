@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Venta #{{ venta.id_venta }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3><i class="bi bi-pencil-square"></i> Editar Venta #{{ venta.id_venta }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('sales.edit_sale', sale_id=venta.id_venta) }}">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.cliente_id.label(class="form-label") }}
+                                {{ form.cliente_id(class="form-select") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.fecha.label(class="form-label") }}
+                                {{ form.fecha(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.empleado_id.label(class="form-label") }}
+                                {{ form.empleado_id(class="form-select") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.tienda_id.label(class="form-label") }}
+                                {{ form.tienda_id(class="form-select") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.total.label(class="form-label") }}
+                            {{ form.total(class="form-control", readonly=True) }}
+                            <small class="form-text text-muted">
+                                El total se calcula automáticamente según los productos agregados.
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('sales.view_sale', sale_id=venta.id_venta) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sección productos asociados -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-box-seam"></i> Productos de la Venta</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Precio Unitario</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto_venta in venta.productos %}
+                            <tr>
+                                <td>{{ producto_venta.producto.nombre }}</td>
+                                <td class="text-center">{{ producto_venta.cantidad }}</td>
+                                <td class="text-end">${{ "%.2f"|format(producto_venta.precio_unitario) }}</td>
+                                <td class="text-end">${{ "%.2f"|format(producto_venta.subtotal()) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total:</th>
+                                <th class="text-end">${{ "%.2f"|format(venta.total) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <a href="{{ url_for('sales.add_product_to_sale', sale_id=venta.id_venta) }}" 
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Añadir Producto
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

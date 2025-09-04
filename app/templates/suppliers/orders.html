@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Órdenes de Proveedor{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Órdenes de Proveedor</h2>
+    {% if current_user.rol.nombre == 'Administrador' %}
+    <a href="{{ url_for('suppliers.create_order') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nueva Orden
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Proveedor</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for orden in orders %}
+            <tr>
+              <td>{{ orden.id_orden_proveedor }}</td>
+              <td>{{ orden.proveedor.nombre if orden.proveedor else 'N/A' }}</td>
+              <td>{{ orden.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td>
+                <span class="badge
+                  {% if orden.estado == 'pendiente' %} bg-warning
+                  {% elif orden.estado == 'recibida' %} bg-success
+                  {% elif orden.estado == 'cancelada' %} bg-danger
+                  {% else %} bg-secondary
+                  {% endif %}">
+                  {{ orden.estado|capitalize }}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('suppliers.view_order', order_id=orden.id_orden_proveedor) }}"
+                   class="btn btn-sm btn-info">
+                  <i class="bi bi-eye"></i> Detalles
+                </a>
+
+                {% if current_user.rol.nombre in ['Administrador', 'Proveedor'] and orden.estado == 'pendiente' %}
+                  <!-- Formulario para marcar como recibida -->
+                  <form method="POST"
+                        action="{{ url_for('suppliers.update_order_status', order_id=orden.id_orden_proveedor) }}"
+                        class="d-inline">
+                    {{ update_form.hidden_tag() }}
+                    <input type="hidden" name="estado" value="recibida">
+                    <button type="submit" class="btn btn-sm btn-success"
+                            onclick="return confirm('¿Marcar esta orden como recibida?')">
+                      <i class="bi bi-check-circle"></i> Recibir
+                    </button>
+                  </form>
+
+                  <!-- Formulario para cancelar -->
+                  <form method="POST"
+                        action="{{ url_for('suppliers.update_order_status', order_id=orden.id_orden_proveedor) }}"
+                        class="d-inline">
+                    {{ update_form.hidden_tag() }}
+                    <input type="hidden" name="estado" value="cancelada">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('¿Cancelar esta orden?')">
+                      <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

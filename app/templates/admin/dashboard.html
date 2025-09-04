@@ -1,125 +1,192 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coquito Amarrillo - {% block title %}{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard') }}">
-                <i class="bi bi-shop"></i> Coquito Amarrillo
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        
-                        {% if current_user.rol.nombre in ['Administrador', 'Vendedor'] %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('products.list_products') }}">
-                                    <i class="bi bi-box-seam"></i> Productos
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('clients.list_clients') }}">
-                                    <i class="bi bi-people"></i> Clientes
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('sales.list_sales') }}">
-                                    <i class="bi bi-cash-coin"></i> Ventas
-                                </a>
-                            </li>
-                        {% endif %}
-                        
-                        {% if current_user.rol.nombre == 'Administrador' %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-gear"></i> Administración
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_users') }}">Usuarios</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_roles') }}">Roles</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('staff.list_staff') }}">Personal</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('suppliers.list_suppliers') }}">Proveedores</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('cities.list_cities') }}">Ciudades</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                        
-                        {% if current_user.rol.nombre == 'Proveedor' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('suppliers.list_orders') }}">
-                                    <i class="bi bi-card-checklist"></i> Mis Órdenes
-                                </a>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <span class="navbar-text me-3">
-                                <i class="bi bi-person-circle"></i> {{ current_user.nombre }} ({{ current_user.rol.nombre }})
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login') }}">
-                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="bi bi-speedometer2"></i> Bienvenido {{ current_user.nombre }}
+        <small class="text-muted">({{ current_user.rol.nombre }})</small>
+    </h2>
+
+    {% if stats.error %}
+        <div class="alert alert-danger">
+            Ocurrió un error al cargar estadísticas: {{ stats.error }}
+        </div>
+    {% else %}
+
+        <!-- ===============================
+             ADMINISTRADOR
+        ================================ -->
+        {% if current_user.rol.nombre == 'Administrador' %}
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Productos</h6>
+                        <p class="display-6">{{ stats.total_products }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Ventas Hoy</h6>
+                        <p class="display-6">{{ stats.total_sales_today }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Clientes</h6>
+                        <p class="display-6">{{ stats.total_clients }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Tiendas</h6>
+                        <p class="display-6">{{ stats.total_stores }}</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <div class="container-fluid mt-4">
+        {% if stats.low_stock_products %}
+        <h4 class="mt-5"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Productos con bajo stock</h4>
+        <table class="table table-hover mt-3">
+            <thead class="table-danger">
+                <tr>
+                    <th>Producto</th>
+                    <th>Stock</th>
+                    <th>Stock mínimo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in stats.low_stock_products %}
+                <tr>
+                    <td>{{ product.nombre }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>{{ product.stock_minimo }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if stats.recent_sales %}
+        <h4 class="mt-5"><i class="bi bi-cash-coin"></i> Ventas recientes</h4>
+        <table class="table table-striped mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in stats.recent_sales %}
+                <tr>
+                    <td>#{{ sale.id_venta }}</td>
+                    <td>{{ sale.cliente.nombre if sale.cliente else "N/A" }}</td>
+                    <td>${{ "%.2f"|format(sale.total) }}</td>
+                    <td>{{ sale.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endif %}
+
+        <!-- ===============================
+             VENDEDOR
+        ================================ -->
+        {% if current_user.rol.nombre == 'Vendedor' %}
         <div class="row">
-            <main class="col-md-12">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                
-                {% block content %}{% endblock %}
-            </main>
+            <div class="col-md-4 mb-3">
+                <div class="card bg-success text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Ventas Hoy (Tienda)</h6>
+                        <p class="display-6">{{ stats.store_sales_today }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card bg-primary text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Total Clientes</h6>
+                        <p class="display-6">{{ stats.total_clients }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <footer class="bg-dark text-light text-center py-3 mt-5">
-        <div class="container">
-            <p>&copy; 2025 Coquito Amarrillo. Todos los derechos reservados.</p>
+        {% if stats.store_recent_sales %}
+        <h4 class="mt-5"><i class="bi bi-cash"></i> Ventas recientes de tu tienda</h4>
+        <table class="table table-striped mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in stats.store_recent_sales %}
+                <tr>
+                    <td>#{{ sale.id_venta }}</td>
+                    <td>{{ sale.cliente.nombre if sale.cliente else "N/A" }}</td>
+                    <td>${{ "%.2f"|format(sale.total) }}</td>
+                    <td>{{ sale.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endif %}
+
+        <!-- ===============================
+             PROVEEDOR
+        ================================ -->
+        {% if current_user.rol.nombre == 'Proveedor' %}
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card bg-info text-white shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6>Total Órdenes</h6>
+                        <p class="display-6">{{ stats.supplier_orders|length }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    {% block scripts %}{% endblock %}
-</body>
-</html>
+        {% if stats.recent_orders %}
+        <h4 class="mt-5"><i class="bi bi-truck"></i> Órdenes recientes</h4>
+        <table class="table table-striped mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>ID Orden</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in stats.recent_orders %}
+                <tr>
+                    <td>#{{ order.id_orden_proveedor }}</td>
+                    <td>{{ order.estado }}</td>
+                    <td>{{ order.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}

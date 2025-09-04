@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Detalles de la Ciudad{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0"><i class="bi bi-building"></i> Detalles de la Ciudad</h4>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-4">ID:</dt>
+            <dd class="col-sm-8">{{ ciudad.id_ciudad }}</dd>
+
+            <dt class="col-sm-4">Nombre:</dt>
+            <dd class="col-sm-8">{{ ciudad.nombre }}</dd>
+
+            <dt class="col-sm-4">Estado:</dt>
+            <dd class="col-sm-8">
+              <span class="badge {% if ciudad.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if ciudad.activo %} Activa {% else %} Inactiva {% endif %}
+              </span>
+            </dd>
+          </dl>
+
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            {% if ciudad.activo %}
+              <a href="{{ url_for('cities.edit_city', city_id=ciudad.id_ciudad) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <form method="POST" action="{{ url_for('cities.delete_city', city_id=ciudad.id_ciudad) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar esta ciudad?')">
+                  <i class="bi bi-x-circle"></i> Desactivar
+                </button>
+              </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('cities.activate_city', city_id=ciudad.id_ciudad) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar esta ciudad?')">
+                  <i class="bi bi-check-circle"></i> Activar
+                </button>
+              </form>
+            {% endif %}
+
+            <a href="{{ url_for('cities.list_cities') }}" class="btn btn-secondary">
+              <i class="bi bi-arrow-left-circle"></i> Volver
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

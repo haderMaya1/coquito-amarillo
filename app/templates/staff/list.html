@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Empleados{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people-fill"></i> Gestión de Empleados</h2>
+    <div>
+      <a href="{{ url_for('staff.create_staff') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nuevo Empleado
+      </a>
+      <a href="{{ url_for('staff.list_staff', mostrar_inactivos=not mostrar_inactivos) }}"
+         class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
+        {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Cargo</th>
+              <th>Salario</th>
+              <th>Ciudad</th>
+              <th>Tienda / Proveedor</th>
+              <th>Usuario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for empleado in staff %}
+            <tr class="{% if not empleado.activo %}table-secondary{% endif %}">
+              <td>{{ empleado.id_empleado }}</td>
+              <td>{{ empleado.nombre }}</td>
+              <td>{{ empleado.cargo }}</td>
+              <td>${{ empleado.salario }}</td>
+              <td>{{ empleado.ciudad.nombre if empleado.ciudad else 'N/A' }}</td>
+              <td>
+                {% if empleado.tienda %}
+                  <span class="badge bg-info">{{ empleado.tienda.nombre }}</span>
+                {% elif empleado.proveedor %}
+                  <span class="badge bg-secondary">{{ empleado.proveedor.nombre }}</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>{{ empleado.usuario.nombre if empleado.usuario else '—' }}</td>
+              <td>
+                <span class="badge {% if empleado.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if empleado.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('staff.view_staff', staff_id=empleado.id_empleado) }}" class="btn btn-sm btn-info">
+                  <i class="bi bi-eye"></i> Ver
+                </a>
+                <a href="{{ url_for('staff.edit_staff', staff_id=empleado.id_empleado) }}" class="btn btn-sm btn-warning">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+
+                {% if empleado.activo %}
+                <!-- Formulario desactivar -->
+                <form method="POST"
+                      action="{{ url_for('staff.delete_staff', staff_id=empleado.id_empleado) }}"
+                      class="d-inline">
+                  {{ delete_form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-danger"
+                          onclick="return confirm('¿Desactivar al empleado {{ empleado.nombre }}?')">
+                    <i class="bi bi-x-circle"></i> Desactivar
+                  </button>
+                </form>
+                {% else %}
+                <!-- Formulario activar -->
+                <form method="POST"
+                      action="{{ url_for('staff.activate_staff', staff_id=empleado.id_empleado) }}"
+                      class="d-inline">
+                  {{ activate_form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-success"
+                          onclick="return confirm('¿Reactivar al empleado {{ empleado.nombre }}?')">
+                    <i class="bi bi-check-circle"></i> Activar
+                  </button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted">No hay empleados registrados</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

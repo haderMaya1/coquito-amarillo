@@ -6,13 +6,13 @@
         <h2>Gestión de Roles</h2>
         <div>
             <a href="{{ url_for('admin.create_role') }}" class="btn btn-primary">Crear Rol</a>
-            <a href="{{ url_for('admin.manage_roles', mostrar_inactivos=not mostrar_inactivos) }}" 
-               class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
+            <a href="{{ url_for('admin.manage_roles', mostrar_inactivos=not mostrar_inactivos) }}"
+                class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
                 {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
             </a>
         </div>
     </div>
-    
+
     <div class="card">
         <div class="card-body">
             <table class="table table-striped">
@@ -38,16 +38,22 @@
                         </td>
                         <td>
                             {% if role.activo %}
-                                <a href="{{ url_for('admin.edit_role', role_id=role.id_rol) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ role.id_rol }}">Desactivar</button>
+                            <a href="{{ url_for('admin.edit_role', role_id=role.id_rol) }}"
+                                class="btn btn-sm btn-warning">Editar</a>
+                            <p class="text-warning">
+                                Nota: No podrás desactivar este rol si hay usuarios actualmente asignados a él.
+                            </p>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ role.id_rol }}">Desactivar</button>
                             {% else %}
-                                <form action="{{ url_for('admin.activate_role', role_id=role.id_rol) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success">Activar</button>
-                                </form>
+                            <form action="{{ url_for('admin.activate_role', role_id=role.id_rol) }}" method="POST"
+                                class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">Activar</button>
+                            </form>
                             {% endif %}
                         </td>
                     </tr>
-                    
+
                     <!-- Modal para desactivar rol -->
                     <div class="modal fade" id="deleteModal{{ role.id_rol }}" tabindex="-1">
                         <div class="modal-dialog">
@@ -58,11 +64,14 @@
                                 </div>
                                 <div class="modal-body">
                                     <p>¿Estás seguro de que deseas desactivar el rol "{{ role.nombre }}"?</p>
-                                    <p class="text-warning">El rol no se eliminará permanentemente, pero no estará disponible para asignar a nuevos usuarios.</p>
+                                    <p class="text-warning">El rol no se eliminará permanentemente, pero no estará
+                                        disponible para asignar a nuevos usuarios.</p>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                    <form action="{{ url_for('admin.delete_role', role_id=role.id_rol) }}" method="POST">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ url_for('admin.delete_role', role_id=role.id_rol) }}"
+                                        method="POST">
                                         <button type="submit" class="btn btn-danger">Desactivar</button>
                                     </form>
                                 </div>

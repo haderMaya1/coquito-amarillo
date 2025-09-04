@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Detalles del Empleado{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0"><i class="bi bi-person-badge-fill"></i> Detalles del Empleado</h4>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-4">ID:</dt>
+            <dd class="col-sm-8">{{ empleado.id_empleado }}</dd>
+
+            <dt class="col-sm-4">Nombre:</dt>
+            <dd class="col-sm-8">{{ empleado.nombre }}</dd>
+
+            <dt class="col-sm-4">Cargo:</dt>
+            <dd class="col-sm-8">{{ empleado.cargo }}</dd>
+
+            <dt class="col-sm-4">Salario:</dt>
+            <dd class="col-sm-8">${{ empleado.salario }}</dd>
+
+            <dt class="col-sm-4">Ciudad:</dt>
+            <dd class="col-sm-8">{{ empleado.ciudad.nombre if empleado.ciudad else 'N/A' }}</dd>
+
+            <dt class="col-sm-4">Tienda:</dt>
+            <dd class="col-sm-8">{{ empleado.tienda.nombre if empleado.tienda else 'N/A' }}</dd>
+
+            <dt class="col-sm-4">Proveedor:</dt>
+            <dd class="col-sm-8">{{ empleado.proveedor.nombre if empleado.proveedor else 'N/A' }}</dd>
+
+            <dt class="col-sm-4">Usuario vinculado:</dt>
+            <dd class="col-sm-8">{{ empleado.usuario.nombre if empleado.usuario else 'N/A' }}</dd>
+
+            <dt class="col-sm-4">Estado:</dt>
+            <dd class="col-sm-8">
+              <span class="badge {% if empleado.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if empleado.activo %}Activo{% else %}Inactivo{% endif %}
+              </span>
+            </dd>
+          </dl>
+
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            {% if empleado.activo %}
+              <a href="{{ url_for('staff.edit_staff', staff_id=empleado.id_empleado) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <form method="POST" action="{{ url_for('staff.delete_staff', staff_id=empleado.id_empleado) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar este empleado?')">
+                  <i class="bi bi-x-circle"></i> Desactivar
+                </button>
+              </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('staff.activate_staff', staff_id=empleado.id_empleado) }}" class="d-inline">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar este empleado?')">
+                  <i class="bi bi-check-circle"></i> Activar
+                </button>
+              </form>
+            {% endif %}
+
+            <a href="{{ url_for('staff.list_staff') }}" class="btn btn-secondary">
+              <i class="bi bi-arrow-left-circle"></i> Volver
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

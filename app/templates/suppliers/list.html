@@ -1,89 +1,94 @@
 {% extends "base.html" %}
+{% block title %}Gestión de Proveedores{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gestión de Proveedores</h2>
-        {% if current_user.rol.nombre == 'Administrador' %}
-        <div>
-            <a href="{{ url_for('suppliers.create_supplier') }}" class="btn btn-primary">Crear Proveedor</a>
-            <a href="{{ url_for('suppliers.list_suppliers', mostrar_inactivos=not mostrar_inactivos) }}" 
-               class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
-                {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
-            </a>
-        </div>
-        {% endif %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Gestión de Proveedores</h2>
+    {% if current_user.rol.nombre == 'Administrador' %}
+    <div>
+      <a href="{{ url_for('suppliers.create_supplier') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nuevo Proveedor
+      </a>
+      <a href="{{ url_for('suppliers.list_suppliers', mostrar_inactivos=not mostrar_inactivos) }}"
+         class="btn btn-{% if mostrar_inactivos %}warning{% else %}secondary{% endif %}">
+        {% if mostrar_inactivos %}Ocultar Inactivos{% else %}Mostrar Inactivos{% endif %}
+      </a>
     </div>
-    
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Contacto</th>
-                        <th>Ciudad</th>
-                        <th>Estado</th>
-                        {% if current_user.rol.nombre == 'Administrador' %}
-                        <th>Acciones</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for supplier in suppliers %}
-                    <tr class="{% if not supplier.activo %}table-secondary{% endif %}">
-                        <td>{{ supplier.id_proveedor }}</td>
-                        <td>{{ supplier.nombre }}</td>
-                        <td>{{ supplier.contacto }}</td>
-                        <td>{{ supplier.ciudad.nombre if supplier.ciudad else 'N/A' }}</td>
-                        <td>
-                            <span class="badge {% if supplier.activo %}bg-success{% else %}bg-secondary{% endif %}">
-                                {% if supplier.activo %}Activo{% else %}Inactivo{% endif %}
-                            </span>
-                        </td>
-                        {% if current_user.rol.nombre == 'Administrador' %}
-                        <td>
-                            <a href="{{ url_for('suppliers.view_supplier', supplier_id=supplier.id_proveedor) }}" class="btn btn-sm btn-info">Detalles</a>
-                            {% if supplier.activo %}
-                                <a href="{{ url_for('suppliers.edit_supplier', supplier_id=supplier.id_proveedor) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ supplier.id_proveedor }}">Desactivar</button>
-                            {% else %}
-                                <form action="{{ url_for('suppliers.activate_supplier', supplier_id=supplier.id_proveedor) }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success">Activar</button>
-                                </form>
-                            {% endif %}
-                        </td>
-                        {% endif %}
-                    </tr>
-                    
-                    {% if current_user.rol.nombre == 'Administrador' %}
-                    <!-- Modal para desactivar proveedor -->
-                    <div class="modal fade" id="deleteModal{{ supplier.id_proveedor }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Desactivar Proveedor</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p>¿Estás seguro de que deseas desactivar al proveedor "{{ supplier.nombre }}"?</p>
-                                    <p class="text-warning">El proveedor no se eliminará permanentemente, pero ya no estará disponible para nuevas órdenes.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                    <form action="{{ url_for('suppliers.delete_supplier', supplier_id=supplier.id_proveedor) }}" method="POST">
-                                        <button type="submit" class="btn btn-danger">Desactivar</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Contacto</th>
+              <th>Ciudad</th>
+              <th>Estado</th>
+              {% if current_user.rol.nombre == 'Administrador' %}
+              <th>Acciones</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for supplier in suppliers %}
+            <tr class="{% if not supplier.activo %}table-secondary{% endif %}">
+              <td>{{ supplier.id_proveedor }}</td>
+              <td>{{ supplier.nombre }}</td>
+              <td>{{ supplier.contacto }}</td>
+              <td>{{ supplier.ciudad.nombre if supplier.ciudad else 'N/A' }}</td>
+              <td>
+                <span class="badge {% if supplier.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if supplier.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+              </td>
+              {% if current_user.rol.nombre == 'Administrador' %}
+              <td>
+                <a href="{{ url_for('suppliers.view_supplier', supplier_id=supplier.id_proveedor) }}"
+                   class="btn btn-sm btn-info">
+                  <i class="bi bi-eye"></i> Detalles
+                </a>
+
+                {% if supplier.activo %}
+                  <a href="{{ url_for('suppliers.edit_supplier', supplier_id=supplier.id_proveedor) }}"
+                     class="btn btn-sm btn-warning">
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+
+                  <!-- Formulario WTForms para desactivar -->
+                  <form method="POST"
+                        action="{{ url_for('suppliers.delete_supplier', supplier_id=supplier.id_proveedor) }}"
+                        class="d-inline">
+                    {{ delete_form.hidden_tag() }}
+                    <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('¿Desactivar este proveedor?')">
+                      <i class="bi bi-x-circle"></i> Desactivar
+                    </button>
+                  </form>
+                {% else %}
+                  <!-- Formulario WTForms para activar -->
+                  <form method="POST"
+                        action="{{ url_for('suppliers.activate_supplier', supplier_id=supplier.id_proveedor) }}"
+                        class="d-inline">
+                    {{ activate_form.hidden_tag() }}
+                    <button type="submit" class="btn btn-sm btn-success"
+                            onclick="return confirm('¿Reactivar este proveedor?')">
+                      <i class="bi bi-check-circle"></i> Activar
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

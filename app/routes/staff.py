@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
 from app.models import Staff, Store, City, User, Supplier
-from app.forms import StaffForm
+from app.forms import StaffForm, ConfirmDeleteForm
 from app.utils.security import sanitize_form_data
 from app.utils.decorators import admin_required
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,7 +22,10 @@ def list_staff():
     else:
         staff = Staff.get_activos().all()
     
-    return render_template('staff/list.html', staff=staff, mostrar_inactivos=mostrar_inactivos)
+    delete_form = ConfirmDeleteForm()
+    activate_form = ConfirmDeleteForm()
+    
+    return render_template('staff/list.html', staff=staff, mostrar_inactivos=mostrar_inactivos, activate_form=activate_form, delete_form=delete_form)
 
 @staff_bp.route('/create', methods=['GET', 'POST'])
 @login_required

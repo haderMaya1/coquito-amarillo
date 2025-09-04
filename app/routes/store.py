@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from app import db
 from app.models import Store, City
-from app.forms import StoreForm
+from app.forms import StoreForm, ConfirmDeleteForm
 from app.utils.decorators import admin_required
 from datetime import datetime
 
@@ -20,8 +20,11 @@ def list_stores():
         stores = Store.get_todas().all()
     else:
         stores = Store.get_activas().all()
+        
+    delete_form = ConfirmDeleteForm()
+    activate_form = ConfirmDeleteForm()
     
-    return render_template('stores/list.html', stores=stores, mostrar_inactivas=mostrar_inactivas)
+    return render_template('stores/list.html', stores=stores, mostrar_inactivas=mostrar_inactivas, activate_form=activate_form, delete_form=delete_form)
 
 @store_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -121,4 +124,7 @@ def view_store(store_id):
     # Obtener el personal activo de esta tienda
     personal_activo = [empleado for empleado in tienda.personal if empleado.activo]
     
-    return render_template('stores/detail.html', tienda=tienda, personal_activo=personal_activo)
+    delete_form = ConfirmDeleteForm()
+    activate_form = ConfirmDeleteForm()
+    
+    return render_template('stores/detail.html', tienda=tienda, personal_activo=personal_activo, delete_form=delete_form, activate_form=activate_form)

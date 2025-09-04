@@ -3,7 +3,7 @@ from flask_login import login_required
 from app import db
 from sqlalchemy.exc import IntegrityError
 from app.models import City
-from app.forms import CiudadForm
+from app.forms import CiudadForm, ConfirmDeleteForm
 from app.utils.decorators import admin_required
 from datetime import datetime
 
@@ -14,7 +14,11 @@ cities_bp = Blueprint('cities', __name__)
 @admin_required
 def list_cities():
     ciudades = City.query.order_by(City.nombre).all()
-    return render_template('cities/list.html', ciudades=ciudades)
+    
+    active_form = ConfirmDeleteForm()
+    delete_form = ConfirmDeleteForm()
+    
+    return render_template('cities/list.html', ciudades=ciudades, active_form=active_form, delete_form=delete_form)
 
 @cities_bp.route('/create', methods=['GET', 'POST'])
 @login_required
