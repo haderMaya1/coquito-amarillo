@@ -18,7 +18,7 @@ class User(UserMixin, db.Model):
      
     #Relación con Rol y Empleado
     rol = relationship('Role', back_populates='usuarios')
-    empleado = relationship('Staff', back_populates='usuario', uselist=False)
+    empleado_asociado = relationship('Staff', back_populates='usuario', uselist=False)
     
     def get_id(self):
         return str(self.id_usuario)

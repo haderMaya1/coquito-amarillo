@@ -16,7 +16,7 @@ class Product(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)    # Fecha de desactivación
     
     # Relaciones
-    # proveedor = relationship('Supplier', back_populates='productos')
+    proveedor = relationship('Supplier', back_populates='productos')
     ventas = relationship('SaleProduct', back_populates='producto')
     ordenes_cliente = relationship('ClientOrderProduct', back_populates='producto')
     ordenes_proveedor = relationship('SupplierOrderProduct', back_populates='producto')

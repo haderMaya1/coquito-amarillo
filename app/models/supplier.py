@@ -13,10 +13,10 @@ class Supplier(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)
     
     # Relaciones
-    ciudad = relationship('City', backref='proveedores')
-    productos = relationship('Product', backref='proveedor')
-    ordenes = relationship('SupplierOrder', backref='proveedor')
-    empleados = relationship('Staff', backref='proveedor')
+    ciudad = relationship('City', back_populates='proveedores')
+    productos = relationship('Product', back_populates='proveedor')
+    ordenes = relationship('SupplierOrder', back_populates='proveedor')
+    empleados = relationship('Staff', back_populates='proveedor')
     
     
         

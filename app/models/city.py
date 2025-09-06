@@ -11,9 +11,9 @@ class City(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)
     
     # Relaciones
-    # tiendas = relationship('Store', back_populates='ciudad')
+    tiendas = relationship('Store', back_populates='ciudad')
     clientes = relationship('Client', back_populates='ciudad')
-    # proveedores = relationship('Supplier', back_populates='ciudad')
+    proveedores = relationship('Supplier', back_populates='ciudad')
     personal = relationship('Staff', back_populates='ciudad')
     
     # -------- Métodos de consulta ----------

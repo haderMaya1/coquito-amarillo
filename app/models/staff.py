@@ -18,9 +18,9 @@ class Staff(db.Model):
     
     # Relaciones
     ciudad = relationship('City', back_populates='personal')
-    # tienda = relationship('Store', back_populates='personal')
-    usuario = relationship('User', backref='empleado_asociado', uselist=False)
-    # proveedor = relationship('Supplier', back_populates='empleados')
+    tienda = relationship('Store', back_populates='personal')
+    usuario = relationship('User', back_populates='empleado_asociado', uselist=False)
+    proveedor = relationship('Supplier', back_populates='empleados')
     ventas = relationship('Sale', back_populates='empleado')
  
     def desactivar(self):

@@ -13,9 +13,9 @@ class Store(db.Model):
     fecha_eliminacion = db.Column(db.DateTime)
     
     # Relaciones
-    # ciudad = relationship('City', back_populates='tiendas')
-    personal = relationship('Staff', backref='tienda')
-    ventas = relationship('Sale', backref='tienda')
+    ciudad = relationship('City', back_populates='tiendas')
+    personal = relationship('Staff', back_populates='tienda')
+    ventas = relationship('Sale', back_populates='tienda')
     
     def desactivar(self):
         """Marca la tienda como inactiva (soft delete) y desactiva su personal"""
