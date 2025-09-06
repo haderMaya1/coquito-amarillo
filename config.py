@@ -15,9 +15,15 @@ class Config:
     db_path = os.path.join(instance_dir, 'database.db')
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.abspath(db_path)}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # CSRF
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or 'otraClaveSegura'
+    WTF_CSRF_TIME_LIMIT = 3600
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_ECHO = True
 
 class ProductionConfig(Config):
     DEBUG = False

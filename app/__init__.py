@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
@@ -8,21 +8,13 @@ from flask_wtf import CSRFProtect
 import os
 
 db = SQLAlchemy()
+csrf = CSRFProtect()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 migrate = Migrate()
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'claveSegura'
-    # ... otras configuraciones ...
-    
-    # Configuraciones CSRF
-    WTF_CSRF_ENABLED = True  # Habilitar CSRF (por defecto es True)
-    WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or 'csrf_clave_segura'
-    WTF_CSRF_TIME_LIMIT = 3600  # Tiempo de expiración del token en segundos (por defecto 3600)
-    
 # Añadir esto después de la configuración del login_manager
 @login_manager.user_loader
 def load_user(user_id):
@@ -32,8 +24,8 @@ def load_user(user_id):
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
-    csrf = CSRFProtect(app)
     
+    csrf.init_app(app)
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
@@ -48,10 +40,7 @@ def create_app(config_name='default'):
         if not Role.query.first():
             from app.seeds import init_db
             init_db()
-            
-    # ... después de crear la app
-    # app.config['WTF_CSRF_SECRET_KEY'] = app.config['SECRET_KEY']  # Para protección CSRF
-    
+
     
     from app.routes.auth import auth_bp #
     from app.routes.dashboard import dashboard_bp #
@@ -64,7 +53,7 @@ def create_app(config_name='default'):
     from app.routes.staff import staff_bp
     from app.routes.cities import cities_bp #
     
-    app.register_blueprint(auth_bp, url_prefix='/')
+    app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')#
     app.register_blueprint(admin_bp, url_prefix='/admin') #
     app.register_blueprint(products_bp, url_prefix='/products') #
@@ -74,5 +63,9 @@ def create_app(config_name='default'):
     app.register_blueprint(store_bp, url_prefix='/store') #
     app.register_blueprint(staff_bp, url_prefix='/staff')
     app.register_blueprint(cities_bp, url_prefix='/cities') #
+    
+    @app.route('/')
+    def index():
+        return redirect(url_for('auth.login'))
         
     return app
