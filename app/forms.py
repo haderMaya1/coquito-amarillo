@@ -20,6 +20,8 @@ class BaseForm(FlaskForm):
             if re.search(pattern, value, re.IGNORECASE):
                 raise ValidationError('El texto contiene caracteres no permitidos')
             
+class EmptyForm(FlaskForm):
+    pass
 class ConfirmDeleteForm(FlaskForm):
     submit = SubmitField('Confirmar eliminación')
     
@@ -52,6 +54,8 @@ class UserForm(BaseForm):
     activo =  BooleanField('Estado')
     
     fecha_eliminacion = DateTimeField('Fecha de Desactivacion', format='%Y-%m-%d %H:%M')
+    
+    fecha_registro = DateTimeField('Fecha de Registro', format='%Y-%m-%d %H:%M')
     
     submit = SubmitField('Guardar')
 
@@ -170,6 +174,7 @@ class SaleForm(FlaskForm):
         default=datetime.utcnow,
         validators=[DataRequired(message='La fecha de la venta es obligatoria')]
     )
+    
     
     total = DecimalField(
         'Total',

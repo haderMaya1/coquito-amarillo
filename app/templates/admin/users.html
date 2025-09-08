@@ -47,6 +47,7 @@
                                 <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id_usuario }}">Desactivar</button>
                             {% else %}
                                 <form action="{{ url_for('admin.activate_user', user_id=user.id_usuario) }}" method="POST" class="d-inline">
+                                    {{ form.hidden_tag() }}
                                     <button type="submit" class="btn btn-sm btn-success">Activar</button>
                                 </form>
                             {% endif %}
@@ -68,6 +69,7 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                                     <form action="{{ url_for('admin.delete_user', user_id=user.id_usuario) }}" method="POST">
+                                        {{ form.hidden_tag() }}
                                         <button type="submit" class="btn btn-danger">Desactivar</button>
                                     </form>
                                 </div>

@@ -1,0 +1,18 @@
+
+{% extends "base.html" %}
+
+{% block title %} Error 403 {% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <h1 class="display-1 text-danger">403</h1>
+                <h2 class="mb-4">Acceso No Autorizado</h2>
+                <p class="lead">No tienes permisos para acceder a esta página.</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Volver al Inicio</a>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %} Index {% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=1500&q=80');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 100px 0;
+        text-align: center;
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #FFD700;
+        /* Coquito amarillo */
+    }
+
+    .btn-primary {
+        background-color: #FFD700;
+        border-color: #FFD700;
+        color: #000;
+    }
+
+    .btn-primary:hover {
+        background-color: #E6C200;
+        border-color: #E6C200;
+        color: #000;
+    }
+
+    .navbar-brand {
+        font-weight: bold;
+        color: #FFD700 !important;
+    }
+
+    .feature-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+
+    footer {
+        background-color: #f8f9fa;
+        padding: 30px 0;
+    }
+</style>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">
+            <i class="fas fa-store me-2"></i>Coquito Amarillo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Características</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">Acerca de</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">Iniciar Sesión</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">Sistema de Gestión Coquito Amarillo</h1>
+        <p class="lead mb-4">Gestiona tu negocio de manera eficiente con nuestra plataforma integral</p>
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-2">
+            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+        </a>
+        {% else %}
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg me-2">
+            <i class="fas fa-tachometer-alt me-2"></i>Ir al Dashboard
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Características Principales</h2>
+            <p class="lead text-muted">Descubre todo lo que nuestro sistema puede hacer por tu negocio</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="card-title">Gestión de Usuarios</h5>
+                        <p class="card-text">Administra diferentes roles y permisos para tu equipo de trabajo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h5 class="card-title">Control de Inventario</h5>
+                        <p class="card-text">Mantén un registro preciso de tus productos y stock disponible.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="card-title">Reportes y Análisis</h5>
+                        <p class="card-text">Genera reportes detallados para tomar mejores decisiones empresariales.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4">Acerca de Coquito Amarillo</h2>
+                <p class="lead">Somos una empresa comprometida con el desarrollo de soluciones tecnológicas que
+                    impulsan el crecimiento de pequeños y medianos negocios.</p>
+                <p>Nuestro sistema de gestión está diseñado para simplificar tus procesos operativos, ahorrarte
+                    tiempo y ayudarte a tomar decisiones basadas en datos reales.</p>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    class="img-fluid rounded" alt="Equipo de trabajo">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Coquito Amarillo</h5>
+                <p>Sistema de gestión integral para tu negocio</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p>&copy; 2025 Coquito Amarillo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}

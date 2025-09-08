@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     rol_id = db.Column(db.Integer, db.ForeignKey('roles.id_rol'), nullable=False)
     activo = db.Column(db.Boolean, default=True)  # Campo para soft delete
     fecha_eliminacion = db.Column(db.DateTime)    # Fecha de desactivación
+    fecha_registro = db.Column(db.DateTime)
      
     #Relación con Rol y Empleado
     rol = relationship('Role', back_populates='usuarios')

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     password TEXT NOT NULL,
     activo INTEGER DEFAULT 1,
     fecha_eliminacion TEXT,
+    fecha_registro TEXT,
     rol_id INTEGER NOT NULL,
     FOREIGN KEY (rol_id) REFERENCES roles (id_rol)
 );

@@ -52,6 +52,7 @@ def create_app(config_name='default'):
     from app.routes.suppliers import suppliers_bp #
     from app.routes.staff import staff_bp
     from app.routes.cities import cities_bp #
+    from app.routes.main
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')#

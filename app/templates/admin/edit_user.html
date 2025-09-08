@@ -39,6 +39,14 @@
                         </div>
 
                         <div class="mb-3">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            {{ form.confirm_password(class="form-control", placeholder="Confirmar Contraseña") }}
+                            {% for error in form.confirm_password.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
                             {{ form.rol_id.label(class="form-label") }}
                             {{ form.rol_id(class="form-select") }}
                             {% for error in form.rol_id.errors %}

@@ -8,7 +8,7 @@ import json
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
-@dashboard_bp.route('/')
+@dashboard_bp.route('/dashboard/')
 @login_required
 def dashboard():
     """Panel de control principal con estadísticas adaptadas al rol del usuario"""
@@ -19,11 +19,11 @@ def dashboard():
         
         # Estadísticas básicas para todos los roles
         stats = {
-            'total_products': Product.get_activos(activo=True).count(),
+            'total_products': Product.get_activos().count(),
             'total_sales_today': Sale.query.filter(
-                Sale.fecha_venta >= today_start
+                Sale.fecha >= today_start
             ).count(),
-            'total_clients': Client.get_activos(activo=True).count(),
+            'total_clients': Client.get_activos().count(),
         }
 
         # Estadísticas específicas según el rol
@@ -32,9 +32,9 @@ def dashboard():
                 'total_stores': Store.get_activas().count(),
                 'total_staff': Staff.get_activos().count(),
                 'total_suppliers': Supplier.get_activos().count(),
-                'recent_sales': Sale.query.order_by(Sale.fecha_venta.desc()).limit(10).all(),
+                'recent_sales': Sale.query.order_by(Sale.fecha.desc()).limit(10).all(),
                 'low_stock_products': Product.query.filter(
-                    Product.stock <= Product.stock_minimo
+                    Product.stock <= Product.stock
                 ).limit(5).all()
             })
         
@@ -46,11 +46,11 @@ def dashboard():
                 stats.update({
                     'store_sales_today': Sale.query.filter(
                         Sale.tienda_id == user_store.id_tienda,
-                        Sale.fecha_venta >= datetime.utcnow().date()
+                        Sale.fecha >= datetime.utcnow().date()
                     ).count(),
                     'store_recent_sales': Sale.query.filter(
                         Sale.tienda_id == user_store.id_tienda
-                    ).order_by(Sale.fecha_venta.desc()).limit(10).all(),
+                    ).order_by(Sale.fecha.desc()).limit(10).all(),
                 })
         
         elif current_user.rol.nombre == 'Proveedor':
@@ -65,11 +65,11 @@ def dashboard():
                     ).limit(5).all() if user_supplier else []
                 })
 
-        return render_template('dashboard/index.html', stats=stats, current_user=current_user)
+        return render_template('admin/dashboard.html', stats=stats, current_user=current_user)
     
     except Exception as e:
         # En caso de error, mostrar un dashboard básico
-        return render_template('dashboard/index.html', 
+        return render_template('admin/dashboard.html', 
                              stats={'error': str(e)}, 
                              current_user=current_user)
 
@@ -125,8 +125,8 @@ def sales_data():
     try:
         # Consulta base
         query = Sale.query.filter(
-            Sale.fecha_venta >= start_date,
-            Sale.fecha_venta <= end_date
+            Sale.fecha >= start_date,
+            Sale.fecha <= end_date
         )
         
         # Filtrar por tienda si el usuario es vendedor
@@ -214,12 +214,12 @@ def quick_stats():
                     'total_stores': Store.get_activas().count(),
                     'total_products': Product.get_activos().count(),
                     'today_sales': Sale.query.filter(
-                        Sale.fecha_venta >= datetime.utcnow().date()
+                        Sale.fecha >= datetime.utcnow().date()
                     ).count(),
                     'today_revenue': db.session.query(
                         db.func.sum(Sale.total)
                     ).filter(
-                        Sale.fecha_venta >= datetime.utcnow().date()
+                        Sale.fecha >= datetime.utcnow().date()
                     ).scalar() or 0
                 }
             
@@ -228,13 +228,13 @@ def quick_stats():
                 stats = {
                     'store_sales_today': Sale.query.filter(
                         Sale.tienda_id == current_user.empleado.tienda.id_tienda,
-                        Sale.fecha_venta >= datetime.utcnow().date()
+                        Sale.fecha >= datetime.utcnow().date()
                     ).count(),
                     'store_revenue_today': db.session.query(
                         db.func.sum(Sale.total)
                     ).filter(
                         Sale.tienda_id == current_user.empleado.tienda.id_tienda,
-                        Sale.fecha_venta >= datetime.utcnow().date()
+                        Sale.fecha >= datetime.utcnow().date()
                     ).scalar() or 0,
                     'store_clients': Client.query.filter(
                         Client.tienda_id == current_user.empleado.tienda.id_tienda
@@ -314,17 +314,17 @@ def recent_activity():
         if current_user.rol.nombre == 'Administrador':
             # Últimas ventas
             recent_sales = Sale.query.filter(
-                Sale.fecha_venta >= start_date,
-                Sale.fecha_venta <= end_date
+                Sale.fecha >= start_date,
+                Sale.fecha <= end_date
             ).order_by(
-                Sale.fecha_venta.desc()
+                Sale.fecha.desc()
             ).limit(10).all()
             
             for sale in recent_sales:
                 activities.append({
                     'type': 'sale',
                     'description': f'Venta #{sale.id_venta} por ${sale.total}',
-                    'timestamp': sale.fecha_venta,
+                    'timestamp': sale.fecha,
                     'icon': 'shopping-cart'
                 })
         
@@ -333,17 +333,17 @@ def recent_activity():
             # Ventas recientes de la tienda
             recent_sales = Sale.query.filter(
                 Sale.tienda_id == current_user.empleado.tienda.id_tienda,
-                Sale.fecha_venta >= start_date,
-                Sale.fecha_venta <= end_date
+                Sale.fecha >= start_date,
+                Sale.fecha <= end_date
             ).order_by(
-                Sale.fecha_venta.desc()
+                Sale.fecha.desc()
             ).limit(10).all()
             
             for sale in recent_sales:
                 activities.append({
                     'type': 'sale',
                     'description': f'Venta #{sale.id_venta} por ${sale.total}',
-                    'timestamp': sale.fecha_venta,
+                    'timestamp': sale.fecha,
                     'icon': 'shopping-cart'
                 })
         

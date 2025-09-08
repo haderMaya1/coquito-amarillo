@@ -72,6 +72,7 @@ def create_product():
             
             flash('Producto creado exitosamente', 'success')
             return redirect(url_for('products.list_products'))
+        
         except IntegrityError:
             db.session.rollback()
             flash('Error: Violación de integridad en base de datos', 'danger')
@@ -79,7 +80,7 @@ def create_product():
             db.session.rollback()
             flash(f'Error al crear Producto: {str(e)}', 'error')
         
-        return render_template('admin/create.html', form=form)
+    return render_template('products/create.html', form=form)
 
 @products_bp.route('/<int:product_id>')
 @login_required
@@ -133,7 +134,7 @@ def delete_product(product_id):
     try:
         product = Product.query.get_or_404(product_id)
         product.activo = False
-        product.fecha_eliminacion = datetime.uctnow()
+        product.fecha_eliminacion = datetime.utcnow()
         db.session.commit()
         flash('Producto eliminado exitosamente', 'success')
     except Exception as e:
@@ -178,7 +179,7 @@ def update_stock(product_id):
                     flash(f'Stock reducido en {cantidad} unidades', 'success')
 
             db.session.commit()
-            return redirect(url_for('product.list_prodcut', product_id=product.id_producto))
+            return redirect(url_for('product.list_product'))
         except ValueError as e:
             db.session.rollback()
             flash(str(e), 'danger')

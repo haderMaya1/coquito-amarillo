@@ -18,7 +18,7 @@
                             {{ form.nombre.label(class="form-label") }}
                             {{ form.nombre(class="form-control", placeholder="Nombre completo") }}
                             {% for error in form.nombre.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
 
@@ -26,7 +26,7 @@
                             {{ form.email.label(class="form-label") }}
                             {{ form.email(class="form-control", placeholder="ejemplo@correo.com") }}
                             {% for error in form.email.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
 
@@ -34,6 +34,14 @@
                             {{ form.password.label(class="form-label") }}
                             {{ form.password(class="form-control", placeholder="Contraseña") }}
                             {% for error in form.password.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            {{ form.confirm_password(class="form-control", placeholder="Confirmar Contraseña") }}
+                            {% for error in form.confirm_password.errors %}
                                 <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
@@ -42,7 +50,7 @@
                             {{ form.rol_id.label(class="form-label") }}
                             {{ form.rol_id(class="form-select") }}
                             {% for error in form.rol_id.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
 

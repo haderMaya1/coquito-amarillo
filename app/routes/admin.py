@@ -1,10 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Product, Role, Sale, Staff, Store
 from app.utils.decorators import admin_required, active_user_required, roles_required
 from sqlalchemy.exc import IntegrityError
-from app.forms import UserForm, RolForm, ConfirmDeleteForm
+from app.forms import UserForm, RolForm, ConfirmDeleteForm, EmptyForm
 from app.utils.security import sanitize_form_data
 from datetime import datetime, timedelta
 
@@ -27,6 +27,8 @@ def test_relation():
 @admin_required
 @active_user_required
 def manage_users():
+    usuarios = User.query.all()
+    form = EmptyForm()
     """Gestión de usuarios"""
     try:
         mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
@@ -36,55 +38,92 @@ def manage_users():
         else:
             usuarios = User.query.filter_by(activo=True).all()
         
-        return render_template('admin/users.html', usuarios=usuarios, mostrar_inactivos=mostrar_inactivos)
+        return render_template('admin/users.html', usuarios=usuarios, mostrar_inactivos=mostrar_inactivos, form=form)
     except Exception as e:
         flash(f'Error al cargar usuarios: {str(e)}', 'danger')
         return redirect(url_for('admin.dashboard'))
-    
+
 @admin_bp.route('/users/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def create_user():
     form = UserForm()
-    
-    #Cargar roles
+
+    # Cargar roles y asignar choices antes de validar
     roles = Role.query.all()
     form.rol_id.choices = [(role.id_rol, role.nombre) for role in roles]
-    
+
+    # Si el formulario fue enviado pero no valida, lo registramos (útil)
+    if request.method == 'POST' and not form.validate_on_submit():
+        current_app.logger.debug('Formulario no validó. Errores: %s', form.errors)
+
     if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        # Verificar duplicado
+        if User.query.filter_by(email=email).first():
+            flash('El email ya está registrado', 'danger')
+            return redirect(url_for('admin.create_user'))
+
+        # Construir usuario (sin commit aún)
+        nuevo_usuario = User(
+            nombre=form.nombre.data.strip(),
+            email=email,
+            rol_id=form.rol_id.data,
+            activo=bool(form.activo.data)
+        )
+
+        # Fecha de registro automática
+        nuevo_usuario.fecha_registro = datetime.utcnow()
+
+        # Validar/Asignar contraseña (capturar errores de validación personalizada)
         try:
-            email = form.email.data
-            if User.query.filter_by(email=email).first():
-                flash('El email ya está registrado', 'danger')
-                return redirect(url_for('admin.create_user'), form=form, roles=roles)
-            
-            nuevo_usuario = User(
-                nombre = form.nombre.data.strip(),
-                email = form.email.data.strip().lower(),
-                rol_id = form.rol_id.data,
-                activo = form.activo.data
-            )
-            
             nuevo_usuario.password = form.password.data
-            
-            if not form.activo.data:
-                nuevo_usuario.fecha_eliminacion = form.fecha_eliminacion.data
-            else:
-                nuevo_usuario.fecha_eliminacion = None
-                
-            db.session.add(nuevo_usuario)
+        except ValueError as ve:
+            current_app.logger.warning('Validación de contraseña falló: %s', ve)
+            flash(f'Error en contraseña: {ve}', 'danger')
+            return render_template('admin/create_user.html', form=form, roles=roles)
+
+        # Fecha de eliminación (solo si inactivo y se suministró)
+        if not form.activo.data and getattr(form, 'fecha_eliminacion', None) and form.fecha_eliminacion.data:
+            nuevo_usuario.fecha_eliminacion = form.fecha_eliminacion.data
+        else:
+            nuevo_usuario.fecha_eliminacion = None
+
+        # Logear lo que vamos a insertar (sin exponer contraseñas)
+        try:
+            pwd_hash_len = len(nuevo_usuario._password_hash) if getattr(nuevo_usuario, '_password_hash', None) else 0
+        except Exception:
+            pwd_hash_len = 0
+
+        current_app.logger.debug('Intentando crear usuario: %s', {
+            'nombre': nuevo_usuario.nombre,
+            'email': nuevo_usuario.email,
+            'rol_id': nuevo_usuario.rol_id,
+            'activo': nuevo_usuario.activo,
+            'fecha_registro': nuevo_usuario.fecha_registro,
+            'fecha_eliminacion': nuevo_usuario.fecha_eliminacion,
+            'pwd_hash_len': pwd_hash_len
+        })
+
+        db.session.add(nuevo_usuario)
+
+        # Usamos flush() para forzar la validación de constraints antes del commit
+        try:
+            db.session.flush()   # si hay violación de integridad, ocurrirá aquí
             db.session.commit()
-            
             flash('Usuario creado exitosamente', 'success')
             return redirect(url_for('admin.manage_users'))
-        
-        except IntegrityError:
+        except IntegrityError as ie:
             db.session.rollback()
-            flash('Error: Violación de integridad en base de datos', 'danger')
+            # ie.orig puede contener el mensaje DB (MySQL / SQLite distinto)
+            current_app.logger.error('IntegrityError creando usuario: %s', ie, exc_info=True)
+            flash('Error de integridad en la base de datos (p. ej. email duplicado o FK inválida). Revisa logs.', 'danger')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al crear usuario: {str(e)}', 'error')
-        
+            current_app.logger.error('Error inesperado creando usuario', exc_info=True)
+            flash('Error inesperado al crear usuario. Revisa logs del servidor.', 'danger')
+
+    # Al final renderizamos (si GET o si validate_on_submit falló)
     return render_template('admin/create_user.html', form=form, roles=roles)
 
 @admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
@@ -134,7 +173,7 @@ def edit_user(user_id):
             db.session.rollback()
             flash(f'Error al crear usuario: {str(e)}', 'error')
         
-    return render_template('admin/edit_user.html', usuario=usuario, roles=roles)  
+    return render_template('admin/edit_user.html', usuario=usuario, roles=roles, form=form)  
     
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
@@ -157,7 +196,7 @@ def delete_user(user_id):
             db.session.rollback()
             flash(f'Error al desactivar usuario: {str(e)}', 'danger')
 
-    return redirect(url_for('admin.manage_users'), user=user, form=form)
+    return redirect(url_for('admin.manage_users'))
 
 @admin_bp.route('/users/<int:user_id>/activate', methods=['POST'])
 @login_required
@@ -331,7 +370,7 @@ def dashboard():
         
         # Ventas de los últimos 7 días
         fecha_inicio = datetime.utcnow() - timedelta(days=7)
-        ventas_recientes = Sale.query.filter(Sale.fecha_venta >= fecha_inicio).count()
+        ventas_recientes = Sale.query.filter(Sale.fecha >= fecha_inicio).count()
         
         # Usuarios recientes (últimos 30 días)
         usuarios_recientes = User.query.filter(User.fecha_registro >= datetime.utcnow() - timedelta(days=30)).count()
@@ -345,7 +384,7 @@ def dashboard():
                              usuarios_recientes=usuarios_recientes)
     except Exception as e:
         flash(f'Error al cargar el dashboard: {str(e)}', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/users/<int:user_id>/toggle-status', methods=['POST'])
 @login_required
@@ -443,8 +482,8 @@ def sales_report():
         
         # Obtener ventas en el rango de fechas
         ventas = Sale.query.filter(
-            Sale.fecha_venta >= fecha_inicio,
-            Sale.fecha_venta <= fecha_fin
+            Sale.fecha >= fecha_inicio,
+            Sale.fecha <= fecha_fin
         ).all()
         
         # Calcular totales
@@ -479,16 +518,16 @@ def api_sales_data():
         
         # Consultar ventas agrupadas por día
         resultados = db.session.query(
-            db.func.date(Sale.fecha_venta).label('fecha'),
+            db.func.date(Sale.fecha).label('fecha'),
             db.func.count(Sale.id_venta).label('ventas'),
             db.func.sum(Sale.total).label('ingresos')
         ).filter(
-            Sale.fecha_venta >= fecha_inicio,
-            Sale.fecha_venta <= fecha_fin
+            Sale.fecha >= fecha_inicio,
+            Sale.fecha <= fecha_fin
         ).group_by(
-            db.func.date(Sale.fecha_venta)
+            db.func.date(Sale.fecha)
         ).order_by(
-            db.func.date(Sale.fecha_venta)
+            db.func.date(Sale.fecha)
         ).all()
         
         # Formatear datos para el gráfico
