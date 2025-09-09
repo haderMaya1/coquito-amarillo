@@ -51,11 +51,11 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not hasattr(current_user, 'rol') or not current_user.rol:
             flash('Tu cuenta no tiene un rol asignado.', 'danger')
-            return redirect(url_for('dashboard.dashboard'))
+            return redirect(url_for('main.index'))
         
         if current_user.rol.nombre != 'Administrador':
             flash('Se requiere rol de Administrador para acceder a esta página.', 'danger')
-            return redirect(url_for('dashboard.dashboard'))
+            return redirect(url_for('main.unauthorized'))
         
         return f(*args, **kwargs)
     return decorated_function

@@ -16,6 +16,9 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.abspath(db_path)}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    #Limit low Stock
+    LOW_STOCK_THRESHOLD = 2
+    
     # CSRF
     WTF_CSRF_ENABLED = True
     WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or 'otraClaveSegura'

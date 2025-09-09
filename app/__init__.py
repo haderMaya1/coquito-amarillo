@@ -24,6 +24,7 @@ def load_user(user_id):
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    app.config['LOW_STOCK_THRESHOLD'] = 2
     
     csrf.init_app(app)
     db.init_app(app)
@@ -52,7 +53,7 @@ def create_app(config_name='default'):
     from app.routes.suppliers import suppliers_bp #
     from app.routes.staff import staff_bp
     from app.routes.cities import cities_bp #
-    from app.routes.main
+    from app.routes.main import main_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')#
@@ -64,6 +65,7 @@ def create_app(config_name='default'):
     app.register_blueprint(store_bp, url_prefix='/store') #
     app.register_blueprint(staff_bp, url_prefix='/staff')
     app.register_blueprint(cities_bp, url_prefix='/cities') #
+    app.register_blueprint(main_bp)
     
     @app.route('/')
     def index():

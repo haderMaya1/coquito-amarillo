@@ -384,7 +384,7 @@ def dashboard():
                              usuarios_recientes=usuarios_recientes)
     except Exception as e:
         flash(f'Error al cargar el dashboard: {str(e)}', 'danger')
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('dashboard.dashboard'))
 
 @admin_bp.route('/users/<int:user_id>/toggle-status', methods=['POST'])
 @login_required

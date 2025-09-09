@@ -12,7 +12,10 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.dashboard'))
+        if not current_user.activo:
+            flash('Tu cuenta está desactivada. Contacta al administrador.', 'danger')
+            logout_user()
+            return redirect(url_for('auth.login'))
     
     form = LoginForm()
     
@@ -48,9 +51,10 @@ def login():
                         return redirect(next_page or url_for('suppliers.view_supplier', supplier_id=user.empleado.proveedor_id))
                     else:
                         flash('Usuario proveedor no tiene empleado asociado', 'danger')
-                        return redirect(url_for('auth.login'))
-                
-                return redirect(next_page or url_for('dashboard.dashboard'))
+                        return redirect(url_for('auth.logout'))
+                else:
+                    flash('Tu rol no está configurado correctamente.', 'danger')
+                    return redirect(url_for('main.index'))
             else:
                 # No revelar si el email existe o no por seguridad
                 flash('Credenciales incorrectas', 'danger')

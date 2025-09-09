@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, flash
+from flask import Blueprint, render_template, jsonify, request, flash, current_app
 from app.models import Product, Sale, Client, Staff, Store, Supplier, User, SupplierOrder
 from app.forms import DateRangeForm, SalesFilterForm, QuickStatsForm
 from app.utils.decorators import login_required, roles_required, current_user
@@ -10,12 +10,15 @@ dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/dashboard/')
 @login_required
+@roles_required('Administrador', 'Vendedor', 'Proveedor')
 def dashboard():
     """Panel de control principal con estadísticas adaptadas al rol del usuario"""
     try:
         #Obtener fecha de hoy(sin hora)
         today = datetime.utcnow().date()
         today_start = datetime(today.year, today.month, today.day)
+        
+        threshold = current_app.config.get('LOW_STOCK_THRESHOLD', 2)
         
         # Estadísticas básicas para todos los roles
         stats = {
@@ -25,6 +28,11 @@ def dashboard():
             ).count(),
             'total_clients': Client.get_activos().count(),
         }
+        
+        stats.update({
+            'store_sales_today': 0,
+            'store_recent_sales': []
+        })
 
         # Estadísticas específicas según el rol
         if current_user.rol.nombre == 'Administrador':
@@ -34,8 +42,8 @@ def dashboard():
                 'total_suppliers': Supplier.get_activos().count(),
                 'recent_sales': Sale.query.order_by(Sale.fecha.desc()).limit(10).all(),
                 'low_stock_products': Product.query.filter(
-                    Product.stock <= Product.stock
-                ).limit(5).all()
+                    Product.stock <= threshold
+                ).limit(1).all()
             })
         
         elif current_user.rol.nombre == 'Vendedor':
@@ -65,13 +73,13 @@ def dashboard():
                     ).limit(5).all() if user_supplier else []
                 })
 
-        return render_template('admin/dashboard.html', stats=stats, current_user=current_user)
+        return render_template('admin/dashboard.html', stats=stats, current_user=current_user, low_stock_threshold=threshold)
     
     except Exception as e:
         # En caso de error, mostrar un dashboard básico
         return render_template('admin/dashboard.html', 
                              stats={'error': str(e)}, 
-                             current_user=current_user)
+                             current_user=current_user, low_stock_threshold=2)
 
 @dashboard_bp.route('/sales-data', methods=['GET', 'POST'])
 @login_required
