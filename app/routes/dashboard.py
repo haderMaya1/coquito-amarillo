@@ -78,7 +78,7 @@ def dashboard():
     except Exception as e:
         # En caso de error, mostrar un dashboard básico
         return render_template('admin/dashboard.html', 
-                             stats={'error': str(e)}, 
+                             stats={'error': str(e)},
                              current_user=current_user, low_stock_threshold=2)
 
 @dashboard_bp.route('/sales-data', methods=['GET', 'POST'])

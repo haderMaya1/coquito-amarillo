@@ -4,14 +4,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">
-        <i class="bi bi-speedometer2"></i> Bienvenido {{ current_user.nombre }}
+    <h2 class="mb-4 text-black">
+        <i class="bi bi-speedometer2 text-black"></i> Bienvenido {{ current_user.nombre }}
         <small class="text-muted">({{ current_user.rol.nombre }})</small>
     </h2>
 
-    {% if stats.error %}
+    {% if stats.get('error') %}
     <div class="alert alert-danger">
-        Ocurrió un error al cargar estadísticas: {{ stats.error }}
+        Ocurrió un error al cargar estadísticas: {{ stats.get('error') }}
     </div>
     {% else %}
 

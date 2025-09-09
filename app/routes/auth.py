@@ -42,7 +42,7 @@ def login():
                 
                 # Redirección según rol
                 if user.rol.nombre == 'Administrador':
-                    return redirect(next_page or url_for('admin.dashboard'))
+                    return redirect(next_page or url_for('dashboard.dashboard'))
                 elif user.rol.nombre == 'Vendedor':
                     return redirect(next_page or url_for('dashboard.dashboard'))
                 elif user.rol.nombre == 'Proveedor':
