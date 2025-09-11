@@ -22,6 +22,13 @@
                             {% endfor %}
                         </div>
                         <div class="col-md-6 mb-3">
+                            {{ form.categoria.label(class="form-label") }}
+                            {{ form.categoria(class="form-control", placeholder="Ingrese el nombre de una categoria") }}
+                            {% for error in form.categoria.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
                             {{ form.precio.label(class="form-label") }}
                             <div class="input-group">
                                 <span class="input-group-text">$</span>

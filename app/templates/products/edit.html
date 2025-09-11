@@ -11,12 +11,25 @@
                     <h3><i class="bi bi-pencil"></i> Editar Producto</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('products.edit_product', product_id=producto.id_producto) }}">
+                    <form method="POST" action="{{ url_for('products.edit_product', product_id=product.id_producto) }}">
                         {{ form.hidden_tag() }}
 
                         <div class="mb-3">
                             {{ form.nombre.label(class="form-label") }}
                             {{ form.nombre(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.categoria.label(class="form-label") }}
+                            <select class="form-select form-select-sm" name="categoria">
+                                <option value="">Todas las categorías</option>
+                                {% for cat in categorias %}
+                                <option value="{{ cat }}" {% if request.args.get('categoria')==cat %}selected{% endif
+                                    %}>
+                                    {{ cat }}
+                                </option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <div class="mb-3">

@@ -3,8 +3,21 @@
 {% block title %}Gestión de Productos{% endblock %}
 
 {% block content %}
+
+<div class="mb-3 align-items-right">
+    {% if mostrar_inactivos %}
+    <a href="{{ url_for('products.list_products') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-eye-slash"></i> Ocultar inactivos
+    </a>
+    {% else %}
+    <a href="{{ url_for('products.list_products', mostrar_inactivos='true') }}"
+        class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-eye"></i> Ver inactivos
+    </a>
+    {% endif %}
+</div>
 <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
-    <h1 class="h2 mb-0"><i class="bi bi-box-seam d-none d-md-inline"></i> Productos</h1>
+    <h1 class="h2 mb-0 text-dark"><i class="bi bi-box-seam d-none d-md-inline"></i> Productos</h1>
     {% if current_user.rol.nombre == 'Administrador' %}
     <a href="{{ url_for('products.create_product') }}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-circle"></i> <span class="d-none d-md-inline">Nuevo Producto</span>
@@ -13,10 +26,12 @@
     {% endif %}
 </div>
 
+
 <!-- Filtros -->
 <div class="card mb-3">
     <div class="card-header py-2">
-        <button class="btn btn-sm btn-outline-primary w-100 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+        <button class="btn btn-sm btn-outline-primary w-100 d-md-none" type="button" data-bs-toggle="collapse"
+            data-bs-target="#filtersCollapse">
             <i class="bi bi-funnel"></i> Filtros
         </button>
         <h5 class="card-title mb-0 d-none d-md-block"><i class="bi bi-funnel"></i> Filtros</h5>
@@ -24,15 +39,28 @@
     <div class="collapse d-md-block" id="filtersCollapse">
         <div class="card-body py-2">
             <form method="GET" class="row g-2">
+                <!-- <div class="col-12 col-md-4">
+                    <input type="text" class="form-control form-control-sm" name="categoria"
+                        value="{{ request.args.get('categoria', '') }}" placeholder="Categoría...">
+                </div> -->
                 <div class="col-12 col-md-4">
-                    <input type="text" class="form-control form-control-sm" name="categoria" 
-                           value="{{ request.args.get('categoria', '') }}" placeholder="Categoría...">
+                    <select class="form-select form-select-sm" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat }}" {% if request.args.get('categoria')==cat %}selected{% endif %}>
+                            {{ cat }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
+
                 <div class="col-12 col-md-3">
                     <select class="form-select form-select-sm" name="disponibilidad">
                         <option value="">Todos</option>
-                        <option value="disponible" {% if request.args.get('disponibilidad') == 'disponible' %}selected{% endif %}>Disponible</option>
-                        <option value="agotado" {% if request.args.get('disponibilidad') == 'agotado' %}selected{% endif %}>Agotado</option>
+                        <option value="disponible" {% if request.args.get('disponibilidad')=='disponible' %}selected{%
+                            endif %}>Disponible</option>
+                        <option value="agotado" {% if request.args.get('disponibilidad')=='agotado' %}selected{% endif
+                            %}>Agotado</option>
                     </select>
                 </div>
                 {% if proveedores %}
@@ -40,7 +68,8 @@
                     <select class="form-select form-select-sm" name="proveedor">
                         <option value="">Todos los proveedores</option>
                         {% for proveedor in proveedores %}
-                        <option value="{{ proveedor.id_proveedor }}" {% if request.args.get('proveedor') == proveedor.id_proveedor|string %}selected{% endif %}>
+                        <option value="{{ proveedor.id_proveedor }}" {% if
+                            request.args.get('proveedor')==proveedor.id_proveedor|string %}selected{% endif %}>
                             {{ proveedor.nombre|truncate(15) }}
                         </option>
                         {% endfor %}
@@ -54,6 +83,72 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
+
+<!-- Tabla de productos -->
+<div class="card">
+    <div class="card-body table-responsive">
+        {% if products %}
+        <table class="table table-sm table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Proveedor</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.nombre }}</td>
+                    <td>{{ product.categoria }}</td>
+                    <td>{{ product.proveedor.nombre if product.proveedor else '-' }}</td>
+                    <td>
+                        {% if product.stock > 0 %}
+                        <span class="badge bg-success">{{ product.stock }}</span>
+                        {% else %}
+                        <span class="badge bg-danger">Agotado</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ '%.2f'|format(product.precio) }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('products.edit_product', product_id=product.id_producto) }}"
+                            class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if product.activo %}
+                        <!-- Botón desactivar -->
+                        <form action="{{ url_for('products.delete_product', product_id=product.id_producto) }}"
+                            method="POST" class="d-inline">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-sm btn-outline-warning"
+                                onclick="return confirm('¿Seguro que deseas desactivar este producto?')">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <!-- Botón activar -->
+                        <form action="{{ url_for('products.activate_product', product_id=product.id_producto) }}"
+                            method="POST" class="d-inline">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                onclick="return confirm('¿Seguro que deseas activar este producto?')">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-center text-muted">No se encontraron productos.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

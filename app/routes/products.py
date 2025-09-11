@@ -2,8 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models import Product, Supplier
+from sqlalchemy import distinct
 from sqlalchemy.exc import IntegrityError
-from app.forms import ProductForm, StockForm
+from app.forms import ProductForm, StockForm, ConfirmDeleteForm, EmptyForm
 from app.utils.decorators import admin_required, seller_required
 from datetime import datetime
 
@@ -12,35 +13,59 @@ products_bp = Blueprint('products', __name__)
 @products_bp.route('/')
 @login_required
 def list_products():
+    products = Product.query.all()
     # Solo administradores y vendedores pueden ver los productos
     if current_user.rol.nombre not in ['Administrador', 'Vendedor']:
         flash('No tienes permisos para acceder a esta página', 'danger')
         return redirect(url_for('dashboard.dashboard'))
     
+    categorias = [row[0] for row in db.session.query(distinct(Product.categoria)).all() if row[0]]
+    proveedores = Supplier.query.filter_by(activo=True).all()
+    
     # Verificar si se deben mostrar productos inactivos (solo para administradores)
-    mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
-    # Filtros
-    categoria = request.args.get('categoria', '')
-    disponibilidad = request.args.get('disponibilidad', '')
-    
-    query = Product.query
-    
-    if not (mostrar_inactivos and current_user.rol.nombre == 'Administrador'):
-        query = query.filter(Product.activo == True)
-    if categoria:
-        query = query.filter(Product.categoria.ilike(f"%{categoria}"))
-    if disponibilidad == 'disponible':
-        query = query.filter(Product.stock > 0)
-    elif disponibilidad == 'agotado':
-        query = query.filter(Product.stock == 0)
-    
-    products = query.all()
-    
-    return render_template(
-        'products/list.html',                  
-        products=products, 
-        mostrar_inactivos=mostrar_inactivos
-        )
+    try:    
+        mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
+        
+        if mostrar_inactivos:
+            products = Product.query.all()
+        else:
+            products = Product.query.filter_by(activo=True).all()
+            
+        # Filtros
+        categoria = request.args.get('categoria', '').strip()
+        disponibilidad = request.args.get('disponibilidad', '').strip()
+        proveedor_id = request.args.get('proveedor', '').strip()
+        
+        query = Product.query
+        
+        if not (mostrar_inactivos and current_user.rol.nombre == 'Administrador'):
+            query = query.filter(Product.activo == True)
+            
+        if categoria:
+            query = query.filter(Product.categoria.ilike(f"%{categoria}%"))
+            
+        if disponibilidad == 'disponible':
+            query = query.filter(Product.stock > 0)      
+        elif disponibilidad == 'agotado':
+            query = query.filter(Product.stock == 0)
+            
+        if proveedor_id:
+            query = query.filter(Product.proveedor_id == int(proveedor_id))
+        
+        products = query.all()
+        form = EmptyForm()
+        
+        return render_template(
+            'products/list.html',                  
+            products=products, 
+            mostrar_inactivos=mostrar_inactivos,
+            proveedores=proveedores,
+            categorias=categorias,
+            form=form
+            )
+    except Exception as e:
+        flash(f'Error al cargar Productos: {str(e)}', 'danger')
+        return redirect(url_for('dashboard.dashboard'))
 
 @products_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -97,25 +122,33 @@ def view_product(product_id):
 @login_required
 @admin_required
 def edit_product(product_id):
-    producto = Product.query.get_or_404(product_id)
-    form = ProductForm(obj=producto)
+    product = Product.query.get_or_404(product_id)
+    form = ProductForm(obj=product)
     
     form.proveedor_id.choices = [(p.id_proveedor, p.nombre) for p in Supplier.query.order_by(Supplier.nombre).all()]
     
+    categorias = [row[0] for row in db.session.query(distinct(Product.categoria)).all() if row[0]]
+    categoria = request.args.get('categoria', '').strip()
+    
+    query = Product.query
+    
+    if categoria:
+        query = query.filter(Product.categoria.ilike(f"%{categoria}%"))
+    
     if form.validate_on_submit():
         try:
-            producto.nombre = form.nombre.data.strip()
-            producto.categoria = form.categoria.data
-            producto.descripcion = form.descripcion.data
-            producto.precio = form.precio.data
-            producto.stock = form.stock.data
-            producto.proveedor_id = form.proveedor_id.data
-            producto.activo = form.activo.data
+            product.nombre = form.nombre.data.strip()
+            product.categoria = form.categoria.data
+            product.descripcion = form.descripcion.data
+            product.precio = form.precio.data
+            product.stock = form.stock.data
+            product.proveedor_id = form.proveedor_id.data
+            product.activo = form.activo.data
             
             if not form.activo.data:
-                producto.fecha_eliminacion = datetime.utcnow()
+                product.fecha_eliminacion = datetime.utcnow()
             else:
-                producto.fecha_eliminacion = None
+                product.fecha_eliminacion = None
                 
             db.session.commit()
             flash('Producto actualizado exitosamente', 'success')
@@ -125,7 +158,7 @@ def edit_product(product_id):
             db.session.rollback()
             flash(f'Error al actualizar: {str(e)}', 'error')
         
-    return render_template('products/edit.html', producto=producto, form=form)
+    return render_template('products/edit.html',form=form, product=product, categorias=categorias, product_id=product.id_producto)
 
 @products_bp.route('/<int:product_id>/delete', methods=['POST'])
 @login_required
@@ -137,6 +170,7 @@ def delete_product(product_id):
         product.fecha_eliminacion = datetime.utcnow()
         db.session.commit()
         flash('Producto eliminado exitosamente', 'success')
+        
     except Exception as e:
         db.session.rollback()
         flash(f'Error al desactivar producto: {str(e)}', 'danger')
@@ -203,6 +237,6 @@ def api_inventory():
             'precio': float(p.precio),
             'activo': p.activo
         } for p in productos])
-    except ExceptionGroup as e:
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
     
