@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
-    <h1 class="h2 mb-0"><i class="bi bi-people d-none d-md-inline"></i> Clientes</h1>
+    <h1 class="h2 mb-0 text-dark"><i class="bi bi-people d-none d-md-inline"></i> Clientes</h1>
     <div class="d-flex gap-2">
         <a href="{{ url_for('clients.create_client') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-person-plus"></i> <span class="d-none d-md-inline">Nuevo Cliente</span>
         </a>
-        {% if current_user.rol.nombre == 'Administrador' %}
+        {% if current_user.rol.nombre == 'Administrador' or current_user.rol.nombre == 'Vendedor' %}
         <a href="{{ url_for('clients.list_clients', mostrar_inactivos=not mostrar_inactivos) }}" 
            class="btn btn-sm {% if mostrar_inactivos %}btn-warning{% else %}btn-secondary{% endif %}">
             <i class="bi {% if mostrar_inactivos %}bi-eye-slash{% else %}bi-eye{% endif %}"></i> 
@@ -80,6 +80,7 @@
                                 {% else %}
                                 <form action="{{ url_for('clients.activate_client', client_id=client.id_cliente) }}" 
                                       method="POST" class="d-inline">
+                                      {{ form.hidden_tag() }}
                                     <button type="submit" class="btn btn-success btn-sm" title="Activar">
                                         <i class="bi bi-person-check"></i>
                                     </button>
@@ -122,6 +123,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form action="{{ url_for('clients.delete_client', client_id=client.id_cliente) }}" method="POST">
+                    {{ form.hidden_tag() }}
                     <button type="submit" class="btn btn-danger">Desactivar</button>
                 </form>
             </div>

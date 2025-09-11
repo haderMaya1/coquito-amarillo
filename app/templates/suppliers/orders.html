@@ -5,7 +5,7 @@
 <div class="container">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Órdenes de Proveedor</h2>
-    {% if current_user.rol.nombre == 'Administrador' %}
+    {% if current_user.rol.nombre == 'Administrador' or 'Vendedor' %}
     <a href="{{ url_for('suppliers.create_order') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle"></i> Nueva Orden
     </a>

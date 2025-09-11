@@ -143,7 +143,7 @@ class ClienteForm(FlaskForm):
         DataRequired(message='Ingrese un telefono para comunicacion con el cliente'),
         Length(min=3, max=15, message='Debe tener entre 3 y 15 caracteres')
     ])
-    ciudad_id = IntegerField('ciudad_id', coerce=int, validators=[
+    ciudad_id = SelectField('ciudad_id', coerce=int, validators=[
         DataRequired(message='Escoge una ciudad')
     ])
     
@@ -191,17 +191,17 @@ class SaleForm(FlaskForm):
     
     activo = BooleanField('Estado')
     
-    cliente_id = IntegerField(
+    cliente_id = SelectField(
         'Cliente', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un cliente')]
     )
     
-    empleado_id = IntegerField(
+    empleado_id = SelectField(
         'Empleado', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un empleado')]
     )
     
-    tienda_id = IntegerField(
+    tienda_id = SelectField(
         'Tienda', coerce = int,
         validators=[DataRequired(message='Debe seleccionar una tienda')]
     )
@@ -257,7 +257,7 @@ class InvoiceForm(FlaskForm):
         ]
     )
     
-    venta_id = IntegerField(
+    venta_id = SelectField(
         'Venta', coerce =int,
         validators=[DataRequired(message='Debe asociar esta factura a una venta')]
     )
@@ -284,7 +284,7 @@ class ClientOrderForm(FlaskForm):
         ]
     )
     
-    cliente_id = IntegerField(
+    cliente_id = SelectField(
         'Cliente', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un cliente')]
     )

@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from sqlalchemy.exc import IntegrityError
 from app.models import Client, City, ClientOrder, ClientOrderProduct, Product
-from app.forms import ClienteForm, ClientOrderForm, ClientOrderProductForm, ConfirmDeleteForm
+from app.forms import ClienteForm, ClientOrderForm, ClientOrderProductForm, ConfirmDeleteForm, EmptyForm
 from app.utils.decorators import admin_required, seller_required
 
 clients_bp = Blueprint('clients', __name__)
@@ -11,20 +11,26 @@ clients_bp = Blueprint('clients', __name__)
 @clients_bp.route('/')
 @login_required
 def list_clients():
-    # Solo administradores y vendedores pueden ver los clientes
-    if current_user.rol.nombre not in ['Administrador', 'Vendedor']:
-        flash('No tienes permisos para acceder a esta página', 'danger')
+    clients = Client.query.all()
+    form = EmptyForm()
+    try:
+        # Solo administradores y vendedores pueden ver los clientes
+        if current_user.rol.nombre not in ['Administrador', 'Vendedor']:
+            flash('No tienes permisos para acceder a esta página', 'danger')
+            return redirect(url_for('dashboard.dashboard'))
+        
+        mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
+        
+        if mostrar_inactivos and current_user.rol.nombre == 'Administrador' or current_user.rol.nombre == 'Vendedor':
+            clients = Client.get_todos().all()
+        else:
+            clients = Client.get_activos().all()
+        
+        return render_template('clients/list.html', clients=clients, mostrar_inactivos=mostrar_inactivos, form=form)
+    except Exception as e:
+        flash(f'Error al cargar clientes: {str(e)}', 'danger')
         return redirect(url_for('dashboard.dashboard'))
     
-    mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
-    
-    if mostrar_inactivos and current_user.rol.nombre == 'Administrador':
-        clients = Client.get_todos().all()
-    else:
-        clients = Client.get_activos().all()
-    
-    return render_template('clients/list.html', clients=clients, mostrar_inactivos=mostrar_inactivos)
-
 @clients_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @seller_required
@@ -105,7 +111,9 @@ def delete_client(client_id):
         client = Client.query.get_or_404(client_id)
 
         try:
+            client.activo = False
             client.desactivar()
+            db.session.commit()
             flash('Cliente desactivado exitosamente', 'success')
         except Exception as e:
             db.session.rollback()
@@ -119,8 +127,14 @@ def delete_client(client_id):
 def activate_client(client_id):
     client = Client.query.get_or_404(client_id)
     
+    if client.activo:
+        flash('El usuario ya está activo', 'info')
+        return redirect(url_for('clients.list_clients'))
+    
     try:
+        client.activo = True
         client.activar()
+        db.session.commit()
         flash('Cliente reactivado exitosamente', 'success')
     except Exception as e:
         db.session.rollback()
@@ -133,17 +147,69 @@ def activate_client(client_id):
 @seller_required
 def view_client(client_id):
     client = Client.query.get_or_404(client_id)
+    form = EmptyForm()
     # Aquí luego agregaremos el historial de compras
-    return render_template('clients/detail.html', client=client)
+    return render_template('clients/detail.html', client=client, form=form)
+
+################################################################
+#                                                              #
+############################ORDENES#############################
+#                                                              #    
+################################################################
 
 # Listar órdenes de un cliente
 @clients_bp.route('/<int:client_id>/orders')
 @login_required
 def list_client_orders(client_id):
+    form = EmptyForm()
     cliente = Client.query.get_or_404(client_id)
-    return render_template('clients/orders.html', cliente=cliente, ordenes=cliente.ordenes)
 
+    if current_user.rol.nombre not in ['Administrador', 'Vendedor']:
+        flash('No tienes permisos para acceder a esta página', 'danger')
+        return redirect(url_for('dashboard.dashboard'))
 
+    # Base query: todas las órdenes del cliente
+    query = ClientOrder.query.filter_by(cliente_id=client_id)
+
+    # --- Filtros desde request.args ---
+    estado = request.args.get('estado', type=str)
+    mostrar_completadas = request.args.get('mostrar_completadas', '1') == '1'
+    mostrar_canceladas = request.args.get('mostrar_canceladas', '1') == '1'
+    orden_id = request.args.get('orden_id', type=str)
+
+    # Filtro por estado específico
+    if estado and estado in ['pendiente', 'completada', 'cancelada']:
+        query = query.filter(ClientOrder.estado == estado)
+
+    # Filtro por ID de orden
+    if orden_id:
+        query = query.filter(ClientOrder.id_orden_cliente.like(f"%{orden_id}%"))
+
+    # Ocultar completadas si el usuario lo pide
+    if not mostrar_completadas:
+        query = query.filter(ClientOrder.estado != 'completada')
+
+    # Ocultar canceladas si el usuario lo pide
+    if not mostrar_canceladas:
+        query = query.filter(ClientOrder.estado != 'cancelada')
+
+    # Ejecutar query final
+    ordenes = query.order_by(ClientOrder.id_orden_cliente.desc()).all()
+
+    return render_template(
+        'clients/order/orders.html',
+        cliente=cliente,
+        ordenes=ordenes,
+        form=form,
+        # Pasamos los filtros a la vista para mantener estado
+        filtros={
+            'estado': estado,
+            'mostrar_completadas': mostrar_completadas,
+            'mostrar_canceladas': mostrar_canceladas,
+            'orden_id': orden_id
+        }
+    )
+    
 # Crear una orden para un cliente
 @clients_bp.route('/<int:client_id>/orders/create', methods=['GET', 'POST'])
 @login_required
@@ -162,7 +228,7 @@ def create_client_order(client_id):
         flash('Orden creada correctamente', 'success')
         return redirect(url_for('clients.list_client_orders', client_id=cliente.id_cliente))
 
-    return render_template('clients/create_order.html', cliente=cliente, form=form)
+    return render_template('clients/order/create_order.html', cliente=cliente, form=form)
 
 
 # Ver detalle de una orden
@@ -170,7 +236,8 @@ def create_client_order(client_id):
 @login_required
 def view_client_order(order_id):
     orden = ClientOrder.query.get_or_404(order_id)
-    return render_template('clients/order_detail.html', orden=orden)
+    form = EmptyForm()
+    return render_template('clients/order/order_detail.html', orden=orden, form=form)
 
 
 # Agregar productos a una orden existente
@@ -203,4 +270,4 @@ def add_product_to_order(order_id):
         flash('Producto agregado a la orden', 'success')
         return redirect(url_for('clients.view_client_order', order_id=orden.id_orden_cliente))
 
-    return render_template('clients/add_product.html', form=form, orden=orden)
+    return render_template('clients/order/add_product.html', form=form, orden=orden)

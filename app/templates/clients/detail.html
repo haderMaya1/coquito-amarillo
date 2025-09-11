@@ -84,6 +84,7 @@
                         </button>
                         {% else %}
                         <form action="{{ url_for('clients.activate_client', client_id=client.id_cliente) }}" method="POST" class="d-inline">
+                            {{ form.hidden_tag() }}
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-person-check"></i> Activar
                             </button>
@@ -142,6 +143,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form action="{{ url_for('clients.delete_client', client_id=client.id_cliente) }}" method="POST">
+                    {{ form.hidden_tag() }}
                     <button type="submit" class="btn btn-danger">Desactivar</button>
                 </form>
             </div>
