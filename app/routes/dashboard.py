@@ -49,8 +49,8 @@ def dashboard():
         elif current_user.rol.nombre == 'Vendedor':
             # Obtener la tienda del vendedor (si está asociado a una)
             user_store = None
-            if current_user.empleado and current_user.empleado.tienda:
-                user_store = current_user.empleado.tienda
+            if current_user.empleado_asociado and current_user.empleado_asociado.tienda:
+                user_store = current_user.empleado_asociado.tienda
                 stats.update({
                     'store_sales_today': Sale.query.filter(
                         Sale.tienda_id == user_store.id_tienda,
@@ -64,8 +64,8 @@ def dashboard():
         elif current_user.rol.nombre == 'Proveedor':
             # Obtener el proveedor del usuario
             user_supplier = None
-            if current_user.empleado and current_user.empleado.proveedor:
-                user_supplier = current_user.empleado.proveedor
+            if current_user.empleados and current_user.empleados.proveedor:
+                user_supplier = current_user.empleados.proveedor
                 stats.update({
                     'supplier_orders': user_supplier.ordenes_proveedor,
                     'recent_orders': user_supplier.ordenes_proveedor.order_by(
@@ -138,11 +138,11 @@ def sales_data():
         )
         
         # Filtrar por tienda si el usuario es vendedor
-        if current_user.rol.nombre == 'Vendedor' and current_user.empleado and current_user.empleado.tienda:
-            query = query.filter(Sale.tienda_id == current_user.empleado.tienda.id_tienda)
+        if current_user.rol.nombre == 'Vendedor' and current_user.empleado_asociado and current_user.empleado_asociado.tienda:
+            query = query.filter(Sale.tienda_id == current_user.empleado_asociado.tienda.id_tienda)
         
         # Filtrar por proveedor si el usuario es proveedor
-        elif current_user.rol.nombre == 'Proveedor' and current_user.empleado and current_user.empleado.proveedor:
+        elif current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
             # Para proveedores, mostramos datos diferentes (no ventas)
             return jsonify({
                 'success': True,
@@ -232,31 +232,31 @@ def quick_stats():
                 }
             
             # Estadísticas para vendedores
-            elif current_user.rol.nombre == 'Vendedor' and current_user.empleado and current_user.empleado.tienda:
+            elif current_user.rol.nombre == 'Vendedor' and current_user.empleado_asociado and current_user.empleado_asociado.tienda:
                 stats = {
                     'store_sales_today': Sale.query.filter(
-                        Sale.tienda_id == current_user.empleado.tienda.id_tienda,
+                        Sale.tienda_id == current_user.empleado_asociado.tienda.id_tienda,
                         Sale.fecha >= datetime.utcnow().date()
                     ).count(),
                     'store_revenue_today': db.session.query(
                         db.func.sum(Sale.total)
                     ).filter(
-                        Sale.tienda_id == current_user.empleado.tienda.id_tienda,
+                        Sale.tienda_id == current_user.empleado_asociado.tienda.id_tienda,
                         Sale.fecha >= datetime.utcnow().date()
                     ).scalar() or 0,
                     'store_clients': Client.query.filter(
-                        Client.tienda_id == current_user.empleado.tienda.id_tienda
+                        Client.tienda_id == current_user.empleado_asociado.tienda.id_tienda
                     ).count()
                 }
             
             # Estadísticas para proveedores
-            elif current_user.rol.nombre == 'Proveedor' and current_user.empleado and current_user.empleado.proveedor:
+            elif current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
                 stats = {
-                    'total_orders': current_user.empleado.proveedor.ordenes_proveedor.count(),
-                    'pending_orders': current_user.empleado.proveedor.ordenes_proveedor.filter_by(
+                    'total_orders': current_user.empleados.proveedor.ordenes_proveedor.count(),
+                    'pending_orders': current_user.empleados.proveedor.ordenes_proveedor.filter_by(
                         estado='pendiente'
                     ).count(),
-                    'completed_orders': current_user.empleado.proveedor.ordenes_proveedor.filter_by(
+                    'completed_orders': current_user.empleados.proveedor.ordenes_proveedor.filter_by(
                         estado='completada'
                     ).count()
                 }
@@ -337,10 +337,10 @@ def recent_activity():
                 })
         
         # Actividad reciente para vendedores
-        elif current_user.rol.nombre == 'Vendedor' and current_user.empleado and current_user.empleado.tienda:
+        elif current_user.rol.nombre == 'Vendedor' and current_user.empleado_asociado and current_user.empleado_asociado.tienda:
             # Ventas recientes de la tienda
             recent_sales = Sale.query.filter(
-                Sale.tienda_id == current_user.empleado.tienda.id_tienda,
+                Sale.tienda_id == current_user.empleado_asociado.tienda.id_tienda,
                 Sale.fecha >= start_date,
                 Sale.fecha <= end_date
             ).order_by(
@@ -356,9 +356,9 @@ def recent_activity():
                 })
         
         # Actividad reciente para proveedores
-        elif current_user.rol.nombre == 'Proveedor' and current_user.empleado and current_user.empleado.proveedor:
+        elif current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
             # Órdenes recientes
-            recent_orders = current_user.empleado.proveedor.ordenes_proveedor.filter(
+            recent_orders = current_user.empleados.proveedor.ordenes_proveedor.filter(
                 SupplierOrder.fecha_creacion >= start_date,
                 SupplierOrder.fecha_creacion <= end_date
             ).order_by(

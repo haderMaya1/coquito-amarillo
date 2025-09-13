@@ -89,7 +89,7 @@ class ProductForm(BaseForm):
     
     descripcion = StringField('Descripcion', validators=[
         Optional(),
-        Length(min=2, max=255, message='Debe tener entre 2 a 150 caracteres')
+        Length(min=2, max=150, message='Debe tener entre 2 a 150 caracteres')
     ])
     
     precio = DecimalField('Precio', validators=[
@@ -185,7 +185,7 @@ class SaleForm(FlaskForm):
         ]
     )
     
-    estado = StringField('Estado', choices=['activa','anulada'], validators=[
+    estado = SelectField('Estado', choices=['activa','anulada'], validators=[
         Optional()
     ])
     
@@ -210,13 +210,13 @@ class SaleForm(FlaskForm):
     
 #-----------Venta producto--------------
 class SaleProductForm(FlaskForm):
-    id_venta = IntegerField(
-        'Venta', coerce =int,
-        validators=[DataRequired(message='Debe asociar esta línea a una venta')]
-    )
+    id_venta = SelectField('Venta', coerce = int,
+                           validators=[
+                               DataRequired(message='Debe seleccinar una venta')
+                           ])
     
-    id_producto = IntegerField(
-        'Producto',
+    id_producto = SelectField(
+        'Producto', coerce = int,
         validators=[DataRequired(message='Debe seleccionar un producto')]
     )
     
@@ -268,12 +268,12 @@ class InvoiceForm(FlaskForm):
 class ClientOrderForm(FlaskForm):
     fecha = DateTimeField(
         'Fecha de la Orden',
-        format='%Y-%m-%d %H:%M',
+        format='%Y-%m-%d',
         default=datetime.utcnow,
         validators=[DataRequired(message='Debe indicar la fecha de la orden')]
     )
     
-    estado = StringField(
+    estado = SelectField(
         'Estado', choices=[
         ('pendiente', 'Pendiente'),
         ('completada', 'Completada'),
@@ -284,11 +284,12 @@ class ClientOrderForm(FlaskForm):
         ]
     )
     
-    cliente_id = SelectField(
-        'Cliente', coerce = int,
-        validators=[DataRequired(message='Debe seleccionar un cliente')]
-    )
+    descripcion = StringField('Descripcion', validators=[
+        Optional(),
+        Length(min=2, max=150, message='Debe tener entre 2 a 150 caracteres')
+    ])
     
+
     submit = SubmitField('Guardar Orden de Cliente')
     
 #-----------Cliente orden producto--------------
@@ -298,7 +299,7 @@ class ClientOrderProductForm(FlaskForm):
         validators=[DataRequired(message='Debe asociar un pedido de cliente')]
     )
     
-    id_producto = IntegerField(
+    id_producto = SelectField(
         'Producto', coerce=int,
         validators=[DataRequired(message='Debe seleccionar un producto')]
     )

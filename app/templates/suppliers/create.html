@@ -18,11 +18,11 @@
               {{ form.nombre.label(class="form-label") }}
               {{ form.nombre(class="form-control", placeholder="Ingrese el nombre del proveedor") }}
               {% if form.nombre.errors %}
-                <div class="text-danger">
-                  {% for error in form.nombre.errors %}
-                    <small>{{ error }}</small><br>
-                  {% endfor %}
-                </div>
+              <div class="text-danger">
+                {% for error in form.nombre.errors %}
+                <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
               {% endif %}
             </div>
 
@@ -31,11 +31,11 @@
               {{ form.contacto.label(class="form-label") }}
               {{ form.contacto(class="form-control", placeholder="Nombre de contacto o responsable") }}
               {% if form.contacto.errors %}
-                <div class="text-danger">
-                  {% for error in form.contacto.errors %}
-                    <small>{{ error }}</small><br>
-                  {% endfor %}
-                </div>
+              <div class="text-danger">
+                {% for error in form.contacto.errors %}
+                <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
               {% endif %}
             </div>
 
@@ -44,12 +44,17 @@
               {{ form.ciudad_id.label(class="form-label") }}
               {{ form.ciudad_id(class="form-select") }}
               {% if form.ciudad_id.errors %}
-                <div class="text-danger">
-                  {% for error in form.ciudad_id.errors %}
-                    <small>{{ error }}</small><br>
-                  {% endfor %}
-                </div>
+              <div class="text-danger">
+                {% for error in form.ciudad_id.errors %}
+                <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
               {% endif %}
+            </div>
+
+            <div class="form-check mb-3">
+              {{ form.activo(class="form-check-input") }}
+              {{ form.activo.label(class="form-check-label") }}
             </div>
 
             <!-- Botones -->

@@ -9,8 +9,9 @@
       <a href="{{ url_for('cities.create_city') }}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Nueva Ciudad
       </a>
-      <a href="{{ url_for('cities.list_cities', mostrar_inactivas=not mostrar_inactivas) }}"
-         class="btn btn-{% if mostrar_inactivas %}warning{% else %}secondary{% endif %}">
+      <a href="{{ url_for('cities.list_cities', mostrar_inactivas=(not mostrar_inactivas)) }}"
+        class="btn btn-{% if mostrar_inactivas %}warning{% else %}secondary{% endif %}">
+        <i class="bi {% if mostrar_inactivos %}bi-eye-slash{% else %}bi-eye{% endif %}"></i>
         {% if mostrar_inactivas %}Ocultar Inactivas{% else %}Mostrar Inactivas{% endif %}
       </a>
     </div>
@@ -34,9 +35,11 @@
               <td>{{ ciudad.id_ciudad }}</td>
               <td>{{ ciudad.nombre }}</td>
               <td>
-                <span class="badge {% if ciudad.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                <a href="{{ url_for('cities.list_cities', mostrar_inactivos=not mostrar_inactivos)}}"
+                  class="badge {% if ciudad.activo %}bg-success{% else %}bg-secondary{% endif %}">
                   {% if ciudad.activo %} Activa {% else %} Inactiva {% endif %}
-                </span>
+                  </span>
+                </a>
               </td>
               <td>
                 <a href="{{ url_for('cities.view_city', city_id=ciudad.id_ciudad) }}" class="btn btn-sm btn-info">
@@ -47,27 +50,33 @@
                 </a>
 
                 {% if ciudad.activo %}
-                  <!-- Formulario WTForms para desactivar -->
-                  <form method="POST"
-                        action="{{ url_for('cities.delete_city', city_id=ciudad.id_ciudad) }}"
-                        class="d-inline">
-                    {{ delete_form.hidden_tag() }}
-                    <button type="submit" class="btn btn-sm btn-danger"
-                            onclick="return confirm('¿Desactivar esta ciudad?')">
-                      <i class="bi bi-x-circle"></i> Desactivar
-                    </button>
-                  </form>
+                <form method="POST" action="{{ url_for('cities.permanent_delete_city', city_id=ciudad.id_ciudad) }}"
+                  class="d-inline">
+                  {{ form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('⚠️ Esta acción eliminará al Proveedor de forma permanente. ¿Continuar?')">
+                    <i class="bi bi-trash-fill"></i> Delete
+                  </button>
+                </form>
+                <!-- Formulario WTForms para desactivar -->
+                <form method="POST" action="{{ url_for('cities.delete_city', city_id=ciudad.id_ciudad) }}"
+                  class="d-inline">
+                  {{ form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('¿Desactivar esta ciudad?')">
+                    <i class="bi bi-x-circle"></i> Desactivar
+                  </button>
+                </form>
                 {% else %}
-                  <!-- Formulario WTForms para activar -->
-                  <form method="POST"
-                        action="{{ url_for('cities.activate_city', city_id=ciudad.id_ciudad) }}"
-                        class="d-inline">
-                    {{ activate_form.hidden_tag() }}
-                    <button type="submit" class="btn btn-sm btn-success"
-                            onclick="return confirm('¿Reactivar esta ciudad?')">
-                      <i class="bi bi-check-circle"></i> Activar
-                    </button>
-                  </form>
+                <!-- Formulario WTForms para activar -->
+                <form method="POST" action="{{ url_for('cities.activate_city', city_id=ciudad.id_ciudad) }}"
+                  class="d-inline">
+                  {{ form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-success"
+                    onclick="return confirm('¿Reactivar esta ciudad?')">
+                    <i class="bi bi-check-circle"></i> Activar
+                  </button>
+                </form>
                 {% endif %}
               </td>
             </tr>

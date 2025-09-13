@@ -11,7 +11,7 @@ class Staff(db.Model):
     salario = db.Column(db.Numeric(10, 2))
     ciudad_id = db.Column(db.Integer, db.ForeignKey('ciudades.id_ciudad'))
     tienda_id = db.Column(db.Integer, db.ForeignKey('tiendas.id_tienda'))
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), unique=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'))
     proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedores.id_proveedor'))
     activo = db.Column(db.Boolean, default=True)
     fecha_eliminacion = db.Column(db.DateTime)
@@ -19,7 +19,7 @@ class Staff(db.Model):
     # Relaciones
     ciudad = relationship('City', back_populates='personal')
     tienda = relationship('Store', back_populates='personal')
-    usuario = relationship('User', back_populates='empleado_asociado', uselist=False)
+    usuario = relationship('User', back_populates='empleado_asociado')
     proveedor = relationship('Supplier', back_populates='empleados')
     ventas = relationship('Sale', back_populates='empleado')
  

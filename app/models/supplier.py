@@ -11,12 +11,14 @@ class Supplier(db.Model):
     ciudad_id = db.Column(db.Integer, db.ForeignKey('ciudades.id_ciudad'))
     activo = db.Column(db.Boolean, default=True)
     fecha_eliminacion = db.Column(db.DateTime)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'))
     
     # Relaciones
     ciudad = relationship('City', back_populates='proveedores')
     productos = relationship('Product', back_populates='proveedor')
     ordenes = relationship('SupplierOrder', back_populates='proveedor')
     empleados = relationship('Staff', back_populates='proveedor')
+    usuarios = relationship('User', back_populates='empleados')
     
     
         

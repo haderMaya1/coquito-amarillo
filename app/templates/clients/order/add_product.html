@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-plus"></i> Agregar productos a la orden #{{ orden.id_orden_cliente }}</span>
+            <a href="{{ url_for('clients.view_client_order', order_id=orden.id_orden_cliente) }}"
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('clients.add_product_to_order', order_id=orden.id_orden_cliente) }}">
+                {{ form.hidden_tag() }}
+                {{ form.id_orden_cliente(value=orden.id_orden_cliente, type="hidden") }}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.id_producto.label(class="form-label") }}
+                            {{ form.id_producto(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.cantidad.label(class="form-label") }}
+                            {{ form.cantidad(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Agregar a la orden
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Productos agregados -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <i class="fas fa-list"></i> Productos en esta orden
+        </div>
+        <div class="card-body">
+            {% if productos %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in productos %}
+                        <tr>
+                            <td>{{ p.producto.nombre }}</td>
+                            <td>{{ p.cantidad }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <a href="{{ url_for('clients.view_client_order', order_id=orden.id_orden_cliente) }}"
+                   class="btn btn-primary">
+                    <i class="fas fa-check"></i> Finalizar
+                </a>
+            {% else %}
+                <p class="text-muted">Aún no se han agregado productos.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

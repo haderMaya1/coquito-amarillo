@@ -6,8 +6,8 @@
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-plus-circle"></i> Crear nueva orden para {{ cliente.nombre }}</span>
-                    <a href="{{ url_for('clients.list_client_orders', client_id=cliente.id_cliente) }}"
+                    <span><i class="fas fa-edit"></i> Editar Orden #{{ orden.id_orden_cliente }}</span>
+                    <a href="{{ url_for('clients.view_client_order', order_id=orden.id_orden_cliente) }}"
                        class="btn btn-sm btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
@@ -16,42 +16,27 @@
                     <form method="POST">
                         {{ form.hidden_tag() }}
 
-                        <!-- Descripción -->
                         <div class="mb-3">
                             {{ form.descripcion.label(class="form-label") }}
-                            {{ form.descripcion(class="form-control", placeholder="Descripción de la orden") }}
+                            {{ form.descripcion(class="form-control") }}
                             {% for error in form.descripcion.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
 
-                        <!-- Fecha -->
                         <div class="mb-3">
                             {{ form.fecha.label(class="form-label") }}
                             {{ form.fecha(class="form-control", type="date") }}
-                            {% if form.fecha.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.fecha.errors %}
-                                        <div class="text-danger small">{{ error }}</div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">Selecciona una fecha válida</div>
                         </div>
 
-                        <!-- Estado -->
                         <div class="mb-3">
                             {{ form.estado.label(class="form-label") }}
                             {{ form.estado(class="form-select") }}
-                            {% for error in form.estado.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
                         </div>
 
-                        <!-- Botón guardar -->
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar
+                                <i class="fas fa-save"></i> Guardar cambios
                             </button>
                         </div>
                     </form>

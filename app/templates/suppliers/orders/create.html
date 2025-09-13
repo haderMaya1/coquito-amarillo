@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-file-invoice"></i> Crear Orden de Proveedor</h2>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.proveedor_id.label(class="form-label") }}
+            {{ form.proveedor_id(class="form-select") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.fecha.label(class="form-label") }}
+            {{ form.fecha(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.estado.label(class="form-label") }}
+            {{ form.estado(class="form-select") }}
+        </div>
+
+        <hr>
+        <h5>Productos</h5>
+        <div id="productos-container">
+            <div class="row mb-2 producto-row">
+                <div class="col-md-6">
+                    <select name="productos[]" class="form-select" required>
+                        <option value="" disabled selected>-- Seleccione un producto --</option>
+                        {% for p in productos %}
+                            <option value="{{ p.id_producto }}">{{ p.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="cantidades[]" class="form-control" placeholder="Cantidad" min="1" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-producto">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" id="add-producto" class="btn btn-secondary mt-2">
+            <i class="fas fa-plus"></i> Agregar Producto
+        </button>
+
+        <hr>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> Crear Orden
+        </button>
+    </form>
+</div>
+
+<script>
+document.getElementById('add-producto').addEventListener('click', function() {
+    let container = document.getElementById('productos-container');
+    let firstRow = document.querySelector('.producto-row');
+    let newRow = firstRow.cloneNode(true);
+
+    // Resetear valores en la nueva fila
+    newRow.querySelector('select').selectedIndex = 0;
+    newRow.querySelector('input').value = '';
+
+    container.appendChild(newRow);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-producto')) {
+        let rows = document.querySelectorAll('.producto-row');
+        if (rows.length > 1) {
+            e.target.closest('.producto-row').remove();
+        }
+    }
+});
+</script>
+{% endblock %}

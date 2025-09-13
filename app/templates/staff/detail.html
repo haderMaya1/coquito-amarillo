@@ -45,22 +45,32 @@
 
           <div class="mt-4 d-flex justify-content-end gap-2">
             {% if empleado.activo %}
-              <a href="{{ url_for('staff.edit_staff', staff_id=empleado.id_empleado) }}" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Editar
-              </a>
-              <form method="POST" action="{{ url_for('staff.delete_staff', staff_id=empleado.id_empleado) }}" class="d-inline">
-                {{ form.hidden_tag() }}
-                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar este empleado?')">
-                  <i class="bi bi-x-circle"></i> Desactivar
-                </button>
-              </form>
+            <a href="{{ url_for('staff.edit_staff', staff_id=empleado.id_empleado) }}" class="btn btn-warning">
+              <i class="bi bi-pencil"></i> Editar
+            </a>
+            <form method="POST" action="{{ url_for('staff.permanent_delete_staff', staff_id=empleado.id_empleado) }}"
+              class="d-inline">
+              {{ form.hidden_tag() }}
+              <button type="submit" class="btn btn-sm btn-danger"
+                onclick="return confirm('⚠️ Esta acción eliminará al empleado de forma permanente. ¿Continuar?')">
+                <i class="bi bi-trash-fill"></i> Delete
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('staff.delete_staff', staff_id=empleado.id_empleado) }}"
+              class="d-inline">
+              {{ form.hidden_tag() }}
+              <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desactivar este empleado?')">
+                <i class="bi bi-x-circle"></i> Desactivar
+              </button>
+            </form>
             {% else %}
-              <form method="POST" action="{{ url_for('staff.activate_staff', staff_id=empleado.id_empleado) }}" class="d-inline">
-                {{ form.hidden_tag() }}
-                <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar este empleado?')">
-                  <i class="bi bi-check-circle"></i> Activar
-                </button>
-              </form>
+            <form method="POST" action="{{ url_for('staff.activate_staff', staff_id=empleado.id_empleado) }}"
+              class="d-inline">
+              {{ form.hidden_tag() }}
+              <button type="submit" class="btn btn-success" onclick="return confirm('¿Reactivar este empleado?')">
+                <i class="bi bi-check-circle"></i> Activar
+              </button>
+            </form>
             {% endif %}
 
             <a href="{{ url_for('staff.list_staff') }}" class="btn btn-secondary">

@@ -119,3 +119,27 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error adjusting UI for device:', error)
     }
 })
+
+document.addEventListener('DOMContentLoaded', function() {
+    const tiendaSelect = document.getElementById('tienda_id');
+    const proveedorSelect = document.getElementById('proveedor_id');
+    
+    function toggleFields() {
+        if (tiendaSelect.value && tiendaSelect.value !== '-1') {
+            proveedorSelect.disabled = true;
+            proveedorSelect.value = '-1';
+        } else if (proveedorSelect.value && proveedorSelect.value !== '-1') {
+            tiendaSelect.disabled = true;
+            tiendaSelect.value = '-1';
+        } else {
+            tiendaSelect.disabled = false;
+            proveedorSelect.disabled = false;
+        }
+    }
+    
+    tiendaSelect.addEventListener('change', toggleFields);
+    proveedorSelect.addEventListener('change', toggleFields);
+    
+    // Ejecutar al cargar la página por si hay valores pre-seleccionados
+    toggleFields();
+});

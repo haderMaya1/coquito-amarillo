@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-file-invoice"></i> Orden #{{ orden.id_orden_proveedor }}</h2>
+
+    <p><strong>Proveedor:</strong> {{ orden.proveedor.nombre }}</p>
+    <p><strong>Fecha:</strong> {{ orden.fecha.strftime('%Y-%m-%d') }}</p>
+    <p><strong>Estado:</strong> {{ orden.estado }}</p>
+
+    <hr>
+    <h5>Productos en la Orden</h5>
+    {% if orden.productos %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in orden.productos %}
+                <tr>
+                    <td>{{ p.producto.nombre }}</td>
+                    <td>{{ p.cantidad }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay productos en esta orden.</p>
+    {% endif %}
+
+    <a href="{{ url_for('suppliers.list_orders') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+{% endblock %}

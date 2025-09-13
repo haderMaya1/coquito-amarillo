@@ -17,6 +17,11 @@ class City(db.Model):
     personal = relationship('Staff', back_populates='ciudad')
     
     # -------- Métodos de consulta ----------
+    
+    @classmethod
+    def get_todo(cls):
+        return cls.query
+    
     @classmethod
     def get_all(cls):
         """Obtiene todas las ciudades"""

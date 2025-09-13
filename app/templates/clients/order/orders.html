@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <h2 class="mb-4">Órdenes de {{ cliente.nombre }}</h2>
+    <h2 class="mb-4 text-black">Órdenes de {{ cliente.nombre }}</h2>
 
     <!-- Filtros -->
     <div class="card">
@@ -11,21 +11,20 @@
         </div>
         <div class="card-body">
             <form method="GET" class="row g-3">
-                {% if ordenes %}
-                <!-- Buscar por ID de orden -->
+                <!-- SELECT: ID de orden (poblado con las órdenes actuales) -->
                 <div class="col-md-3">
-                    <select class="form-select form-select-sm" name="orden_id"></select>
-                        <option value="">ID Orden</option>
+                    <label for="orden_id" class="form-label">ID Orden</label>
+                    <select class="form-select form-select-sm" name="orden_id" id="orden_id">
+                        <option value="">Todos</option>
                         {% for orden in ordenes %}
-                        <option class="form-control" name="orden_id" id="orden_id" placeholder="Buscar por ID"
-                            value="{{ filtros.orden_id or '' }}" {% if
-                            request.args.get('orden')==ordenes.id_orden_cliente|string %}selected{% endif %}>
-                            {{ orden.id_orden_cliente}}
+                        <option value="{{ orden.id_orden_cliente }}" {% if filtros.orden_id is not none and
+                            filtros.orden_id|string==orden.id_orden_cliente|string %}selected{% endif %}>
+                            {{ orden.id_orden_cliente }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
-                {% endif %}
+
                 <!-- Filtro por estado -->
                 <div class="col-md-3">
                     <label for="estado" class="form-label">Estado</label>
@@ -74,8 +73,12 @@
 
     <!-- Tabla de órdenes -->
     <div class="card mt-4">
-        <div class="card-header">
-            <i class="fas fa-list"></i> Lista de Órdenes
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list"></i> Lista de Órdenes</span>
+            <a href="{{ url_for('clients.create_client_order', client_id=cliente.id_cliente) }}"
+                class="btn btn-sm btn-success">
+                <i class="fas fa-plus"></i> Nueva Orden
+            </a>
         </div>
         <div class="card-body table-responsive">
             <table class="table table-hover align-middle">
@@ -104,7 +107,7 @@
                             <span class="badge bg-secondary">{{ orden.estado }}</span>
                             {% endif %}
                         </td>
-                        <td>{{ orden.fecha_creacion.strftime('%d/%m/%Y %H:%M') if orden.fecha_creacion else '-' }}</td>
+                        <td>{{ orden.fecha.strftime('%Y/%m/%d') if orden.fecha else '-' }}</td>
                         <td>
                             <a href="{{ url_for('clients.view_client_order', order_id=orden.id_orden_cliente) }}"
                                 class="btn btn-sm btn-info">

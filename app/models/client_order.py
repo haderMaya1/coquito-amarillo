@@ -8,6 +8,7 @@ class ClientOrder(db.Model):
     id_orden_cliente = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     estado = db.Column(db.String(50), nullable=False, default='pendiente')
+    descripcion = db.Column(db.String(150))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id_cliente'), nullable=False)
     
     # Relaciones

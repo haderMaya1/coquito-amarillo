@@ -3,7 +3,6 @@ from flask_login import login_user, logout_user, current_user
 from app.models import User, Role
 from app.forms import LoginForm, RegisterForm, ChangePasswordForm, ProfileForm
 from app.utils.decorators import admin_required, login_required
-from app.utils.security import sanitize_form_data
 from app import bcrypt, db
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
@@ -47,8 +46,8 @@ def login():
                     return redirect(next_page or url_for('dashboard.dashboard'))
                 elif user.rol.nombre == 'Proveedor':
                     # Verificar si el usuario tiene un empleado asociado con proveedor
-                    if user.empleado and user.empleado.proveedor:
-                        return redirect(next_page or url_for('suppliers.view_supplier', supplier_id=user.empleado.proveedor_id))
+                    if user.empleados and user.empleados.proveedor:
+                        return redirect(next_page or url_for('suppliers.view_supplier', supplier_id=user.empleados.proveedor_id))
                     else:
                         flash('Usuario proveedor no tiene empleado asociado', 'danger')
                         return redirect(url_for('auth.logout'))

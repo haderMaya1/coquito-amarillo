@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from app import db
 from sqlalchemy.exc import IntegrityError
-from app.models import City
-from app.forms import CiudadForm, ConfirmDeleteForm
+from app.models import City, User
+from app.forms import CiudadForm, ConfirmDeleteForm, EmptyForm
 from app.utils.decorators import admin_required
 from datetime import datetime
 
@@ -13,12 +13,26 @@ cities_bp = Blueprint('cities', __name__)
 @login_required
 @admin_required
 def list_cities():
-    ciudades = City.query.order_by(City.nombre).all()
+    form = EmptyForm()
     
-    active_form = ConfirmDeleteForm()
-    delete_form = ConfirmDeleteForm()
+    mostrar_inactivas = request.args.get('mostrar_inactivas', 'false').lower() in ['1', 'true', 'yes']
+
+    if mostrar_inactivas:
+        ciudades = City.get_todo().all()
+    else:
+        ciudades = City.get_activos().all()
+        
     
-    return render_template('cities/list.html', ciudades=ciudades, active_form=active_form, delete_form=delete_form)
+    return render_template('cities/list.html', mostrar_inactivas=mostrar_inactivas, ciudades=ciudades, form=form)
+
+@cities_bp.route('/<int:city_id>')
+@login_required
+@admin_required
+def view_city(city_id):
+    form = EmptyForm()
+    ciudad = City.query.get_or_404(city_id)
+    
+    return render_template('cities/detail.html', ciudad=ciudad, form=form)
 
 @cities_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -77,16 +91,18 @@ def edit_city(city_id):
 
     return render_template('cities/edit.html', form=form, ciudad=ciudad)
 
-@cities_bp.route('/<int:city_id>/delete', methods=['POST'])
+@cities_bp.route('/<int:city_id>/permanent_delete_city', methods=['POST'])
 @login_required
 @admin_required
-def delete_city(city_id):
+def permanent_delete_city(city_id):
     ciudad = City.query.get_or_404(city_id)
     
-    has_relationships = (ciudad.tiendas.count() > 0 or
-                         ciudad.clientes.count() > 0 or
-                         ciudad.proveedores.count() > 0 or
-                         ciudad.personal.count() > 0
+    #Se debe usar len() y no count(), por no tener una relacion lazy='dynamic'
+    #Por falta de relaciones dinamicas. Esta funcion devuelve lista y no query.
+    has_relationships = (len(ciudad.tiendas) > 0 or
+                         len(ciudad.clientes) > 0 or
+                         len(ciudad.proveedores) > 0 or
+                         len(ciudad.personal) > 0
                          )
     # Verificar relaciones
     if has_relationships:
@@ -95,6 +111,53 @@ def delete_city(city_id):
 
     try:
         db.session.delete(ciudad)
+        db.session.commit()
+        flash('Ciudad eliminada exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar la ciudad: {str(e)}', 'danger')
+
+    return redirect(url_for('cities.list_cities'))
+
+@cities_bp.route('/<int:city_id>/activate', methods=['POST'])
+@login_required
+@admin_required
+def activate_city(city_id):
+    ciudad = City.query.get_or_404(city_id)
+    
+    try:
+        ciudad.activo = False
+        ciudad.activar()
+        flash('Empleado reactivado exitosamente', 'success')
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al activar ciudad: {str(e)}', 'danger')
+    
+    return redirect(url_for('cities.list_cities'))
+
+
+@cities_bp.route('/<int:city_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_city(city_id):
+    ciudad = City.query.get_or_404(city_id)
+    
+    #Se debe usar len() y no count(), por no tener una relacion lazy='dynamic'
+    #Por falta de relaciones dinamicas. Esta funcion devuelve lista y no query.
+    has_relationships = (len(ciudad.tiendas) > 0 or
+                         len(ciudad.clientes) > 0 or
+                         len(ciudad.proveedores) > 0 or
+                         len(ciudad.personal) > 0
+                         )
+    # Verificar relaciones
+    if has_relationships:
+        flash('No se puede eliminar la ciudad porque está siendo utilizada', 'danger')
+        return redirect(url_for('cities.list_cities'))
+
+    try:
+        ciudad.activo = True
+        ciudad.desactivar()
         db.session.commit()
         flash('Ciudad eliminada exitosamente', 'success')
     except Exception as e:
