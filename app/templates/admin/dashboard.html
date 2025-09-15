@@ -28,7 +28,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3 text-black">
             <div class="card bg-success text-white shadow-sm h-100">
                 <div class="card-body text-center">
                     <h6>Ventas Hoy</h6>
@@ -36,7 +36,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3 text-black">
             <div class="card bg-info text-white shadow-sm h-100">
                 <div class="card-body text-center">
                     <h6>Clientes</h6>
@@ -44,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3 text-black">
             <div class="card bg-warning text-white shadow-sm h-100">
                 <div class="card-body text-center">
                     <h6>Tiendas</h6>
@@ -56,7 +56,7 @@
 
     {% if stats.low_stock_products %}
     <h4 class="mt-5"><i class="bi bi-exclamation-triangle-fill text-danger"></i>Stock Productos</h4>
-    <table class="table table-hover mt-3">
+    <table class="table table-hover mt-3 text-black">
         <thead class="table-danger">
             <tr>
                 <th>Producto</th>
@@ -81,7 +81,7 @@
     {% endif %}
 
     {% if stats.recent_sales %}
-    <h4 class="mt-5"><i class="bi bi-cash-coin"></i> Ventas recientes</h4>
+    <h4 class="mt-5 text-black"><i class="bi bi-cash-coin"></i> Ventas recientes</h4>
     <table class="table table-striped mt-3">
         <thead class="table-light">
             <tr>
