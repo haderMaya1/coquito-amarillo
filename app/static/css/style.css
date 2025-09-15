@@ -352,8 +352,16 @@ body {
 
 main {
     flex: 1 0 auto;
+    padding-bottom: 2rem; /* evita que el footer tape contenido */
 }
 
 footer {
     flex-shrink: 0;
+}
+
+@media (max-width: 576px) {
+    .btn-sm {
+        margin-bottom: 0.25rem;
+        width: 100%;
+    }
 }

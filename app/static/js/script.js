@@ -120,10 +120,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 })
 
-document.addEventListener('DOMContentLoaded', function() {
+document.querySelector('form').addEventListener('submit', function (e) {
+    const productos = [];
+    let total = 0;
+    document.querySelectorAll('.producto-row').forEach(row => {
+        const select = row.querySelector('.producto-select');
+        const cantidadInput = row.querySelector('.cantidad-input');
+        if (select.value && cantidadInput.value) {
+            const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
+            const cantidad = parseInt(cantidadInput.value);
+            productos.push({
+                producto_id: parseInt(select.value),
+                cantidad: cantidad
+            });
+            total += precio * cantidad;
+        }
+    });
+    document.getElementById('productos-json').value = JSON.stringify(productos);
+    document.getElementById('total-hidden').value = total.toFixed(2); // 👈 aquí llenamos el total
+});
+
+document.addEventListener('DOMContentLoaded', function () {
     const tiendaSelect = document.getElementById('tienda_id');
     const proveedorSelect = document.getElementById('proveedor_id');
-    
+
     function toggleFields() {
         if (tiendaSelect.value && tiendaSelect.value !== '-1') {
             proveedorSelect.disabled = true;
@@ -136,10 +156,10 @@ document.addEventListener('DOMContentLoaded', function() {
             proveedorSelect.disabled = false;
         }
     }
-    
+
     tiendaSelect.addEventListener('change', toggleFields);
     proveedorSelect.addEventListener('change', toggleFields);
-    
+
     // Ejecutar al cargar la página por si hay valores pre-seleccionados
     toggleFields();
 });

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, current_user
 from app.models import User, Role
 from app.forms import LoginForm, RegisterForm, ChangePasswordForm, ProfileForm
@@ -10,66 +10,84 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    form = LoginForm()
+
+    # Si ya está logueado, mándalo a su dashboard
     if current_user.is_authenticated:
+        # Verificar si el usuario está activo
         if not current_user.activo:
             flash('Tu cuenta está desactivada. Contacta al administrador.', 'danger')
             logout_user()
             return redirect(url_for('auth.login'))
-    
-    form = LoginForm()
-    
+        
+        # Redirigir según el rol
+        if current_user.rol.nombre == 'Administrador':
+            return redirect(url_for('dashboard.dashboard'))
+        elif current_user.rol.nombre == 'Vendedor':
+            return redirect(url_for('dashboard.dashboard'))
+        elif current_user.rol.nombre == 'Proveedor':
+            if current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
+                return redirect(url_for('suppliers.view_supplier', supplier_id=current_user.empleado_asociado.proveedor_id))
+            else:
+                flash('Usuario proveedor no tiene empleado asociado', 'danger')
+                return redirect(url_for('main.index'))
+        else:
+            return redirect(url_for('dashboard.dashboard'))
+
     if form.validate_on_submit():
         try:
             email = form.email.data.strip()
             password = form.password.data
-            
+
             user = User.query.filter_by(email=email).first()
-            
+
             if user and user.check_password(password):
                 if not user.activo:
                     flash('Tu cuenta está desactivada. Contacta al administrador.', 'danger')
                     return render_template('auth/login.html', form=form)
-                
+
                 login_user(user)
                 next_page = request.args.get('next')
-                
-                # Validar que next_page sea una URL segura (mismo sitio)
+
                 if next_page and not next_page.startswith('/'):
                     next_page = None
-                
+
                 flash('Inicio de sesión exitoso', 'success')
-                
+
                 # Redirección según rol
                 if user.rol.nombre == 'Administrador':
                     return redirect(next_page or url_for('dashboard.dashboard'))
                 elif user.rol.nombre == 'Vendedor':
                     return redirect(next_page or url_for('dashboard.dashboard'))
                 elif user.rol.nombre == 'Proveedor':
-                    # Verificar si el usuario tiene un empleado asociado con proveedor
-                    if user.empleados and user.empleados.proveedor:
-                        return redirect(next_page or url_for('suppliers.view_supplier', supplier_id=user.empleados.proveedor_id))
+                    # Acceso directo a la relación (no usar [0] porque es una relación uno-a-uno)
+                    if user.empleado_asociado and user.empleado_asociado.proveedor:
+                        return redirect(next_page or url_for('suppliers.view_supplier', supplier_id=user.empleado_asociado.proveedor_id))
                     else:
                         flash('Usuario proveedor no tiene empleado asociado', 'danger')
-                        return redirect(url_for('auth.logout'))
+                        # No hacer logout inmediatamente, mostrar el mensaje en la página de login
+                        return render_template('admin/dashboard.html', form=form)
                 else:
                     flash('Tu rol no está configurado correctamente.', 'danger')
                     return redirect(url_for('main.index'))
             else:
-                # No revelar si el email existe o no por seguridad
                 flash('Credenciales incorrectas', 'danger')
-                
+
         except SQLAlchemyError as e:
             flash('Error en la base de datos durante el inicio de sesión', 'danger')
-            
+            current_app.logger.error(f'Error de BD en login: {str(e)}')
+
         except Exception as e:
             flash(f'Error durante el inicio de sesión: {str(e)}', 'danger')
+            current_app.logger.error(f'Error inesperado en login: {str(e)}')
     
+    # Mostrar errores de validación del formulario
     elif request.method == 'POST':
         # Si el formulario no pasa la validación, mostrar errores
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f'{getattr(form, field).label.text}: {error}', 'danger')
-    
+
     return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')

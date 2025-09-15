@@ -19,8 +19,7 @@ class User(UserMixin, db.Model):
      
     #Relación con Rol y Empleado
     rol = relationship('Role', back_populates='usuarios')
-    empleado_asociado = relationship('Staff', back_populates='usuario')
-    empleados = relationship('Supplier', back_populates='usuarios')
+    empleado_asociado = relationship('Staff', back_populates='usuario', uselist=False)
     
     def get_id(self):
         return str(self.id_usuario)
@@ -78,4 +77,3 @@ class User(UserMixin, db.Model):
     
     def __repr__(self):
         return f'<User {self.nombre}>'
-    

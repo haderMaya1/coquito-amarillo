@@ -18,7 +18,6 @@ class Supplier(db.Model):
     productos = relationship('Product', back_populates='proveedor')
     ordenes = relationship('SupplierOrder', back_populates='proveedor')
     empleados = relationship('Staff', back_populates='proveedor')
-    usuarios = relationship('User', back_populates='empleados')
     
     
         

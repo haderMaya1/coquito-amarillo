@@ -53,23 +53,24 @@ def create_user():
     roles = Role.query.all()
     form.rol_id.choices = [(role.id_rol, role.nombre) for role in roles]
 
-    # Si el formulario fue enviado pero no valida, lo registramos (útil)
     if request.method == 'POST' and not form.validate_on_submit():
         current_app.logger.debug('Formulario no validó. Errores: %s', form.errors)
 
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
+
         # Verificar duplicado
         if User.query.filter_by(email=email).first():
             flash('El email ya está registrado', 'danger')
             return redirect(url_for('admin.create_user'))
 
-        # Construir usuario (sin commit aún)
+        # Crear el usuario
         nuevo_usuario = User(
             nombre=form.nombre.data.strip(),
             email=email,
             rol_id=form.rol_id.data,
-            activo=bool(form.activo.data)
+            activo=bool(form.activo.data),
+            fecha_registro=datetime.utcnow()
         )
 
         # Fecha de registro automática
@@ -104,27 +105,48 @@ def create_user():
             'fecha_eliminacion': nuevo_usuario.fecha_eliminacion,
             'pwd_hash_len': pwd_hash_len
         })
-
+        # Agregar usuario a la sesión
         db.session.add(nuevo_usuario)
+        db.session.flush()  # para obtener el id_usuario
 
-        # Usamos flush() para forzar la validación de constraints antes del commit
+        # Verificamos el rol seleccionado
+        rol = Role.query.get(form.rol_id.data)
+
+        if rol and rol.nombre == "Vendedor":
+            # Crear empleado asociado a tienda
+            empleado = Staff(
+                nombre=nuevo_usuario.nombre,
+                usuario_id=nuevo_usuario.id_usuario,
+                tienda_id=form.tienda_id.data if hasattr(form, "tienda_id") else None
+            )
+            db.session.add(empleado)
+
+        elif rol and rol.nombre == "Proveedor":
+            # Crear empleado asociado al proveedor
+            empleado = Staff(
+                nombre=nuevo_usuario.nombre,
+                usuario_id=nuevo_usuario.id_usuario,
+                proveedor_id=form.proveedor_id.data if hasattr(form, "proveedor_id") else None
+            )
+            db.session.add(empleado)
+
+        # Si es Administrador, no se crea empleado
+
         try:
-            db.session.flush()   # si hay violación de integridad, ocurrirá aquí
             db.session.commit()
             flash('Usuario creado exitosamente', 'success')
             return redirect(url_for('admin.manage_users'))
         except IntegrityError as ie:
             db.session.rollback()
-            # ie.orig puede contener el mensaje DB (MySQL / SQLite distinto)
+            flash('Error de integridad en la base de datos.', 'danger')
             current_app.logger.error('IntegrityError creando usuario: %s', ie, exc_info=True)
-            flash('Error de integridad en la base de datos (p. ej. email duplicado o FK inválida). Revisa logs.', 'danger')
         except Exception as e:
             db.session.rollback()
+            flash('Error inesperado al crear usuario.', 'danger')
             current_app.logger.error('Error inesperado creando usuario', exc_info=True)
-            flash('Error inesperado al crear usuario. Revisa logs del servidor.', 'danger')
 
-    # Al final renderizamos (si GET o si validate_on_submit falló)
     return render_template('admin/create_user.html', form=form, roles=roles)
+
 
 @admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -223,6 +245,7 @@ def activate_user(user_id):
 @login_required
 @admin_required
 def manage_roles():
+    form = EmptyForm()
     mostrar_inactivos = request.args.get('mostrar_inactivos', 'false').lower() in ['1', 'true', 'yes']
     
     if mostrar_inactivos:
@@ -230,7 +253,7 @@ def manage_roles():
     else:
         roles = Role.get_activos().all()
         
-    return render_template('admin/roles.html', roles=roles, mostrar_inactivos = mostrar_inactivos)
+    return render_template('admin/roles.html', roles=roles, mostrar_inactivos = mostrar_inactivos, form=form)
 
 @admin_bp.route('/roles/create', methods=['GET', 'POST'])
 @login_required
@@ -319,7 +342,7 @@ def delete_role(role_id):
     if form.validate_on_submit():
         # Verificar si hay usuarios con este rol
         try:
-            if role.usuarios.count() > 0:
+            if len(role.usuarios) > 0:
                 flash('No se puede eliminar el rol porque hay usuarios asignados a él', 'danger')
                 return redirect(url_for('admin.manage_roles'))
         
@@ -331,13 +354,14 @@ def delete_role(role_id):
             db.session.rollback()
             flash(f'Error al desactivar rol: {str(e)}', 'danger')
             
-    return redirect(url_for('admin.manage_roles'), role=role, form=form)
+    return redirect(url_for('admin.manage_roles'))
 
 @admin_bp.route('/roles/<int:role_id>/activate', methods=['POST'])
 @login_required
 @admin_required
 def activate_role(role_id):
     role = Role.query.get_or_404(role_id)
+    form = ConfirmDeleteForm()
     
     if role.activo:
         flash('El rol ya está activo', 'info')
@@ -351,7 +375,7 @@ def activate_role(role_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Error al activar el rol: {str(e)}', 'danger')
-    return redirect(url_for('admin.manage_roles'), role=role)
+    return redirect(url_for('admin.manage_roles'))
 
 #----Codigos provenientes de auth, para prevenir errores de sobre-escritura
 

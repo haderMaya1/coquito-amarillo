@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+# from flask_login import login_required, current_user
+from app.utils.decorators import login_required, current_user
 from app import db
 from app.models import City, Supplier, SupplierOrder, Product, SupplierOrderProduct
 from app.forms import SupplierForm, SupplierOrderForm, EmptyForm
@@ -19,8 +20,8 @@ def list_suppliers():
     
     try:
         # Proveedores solo pueden ver su información, administradores ven todos
-        if current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
-            suppliers = [current_user.empleados.proveedor]
+        if current_user.rol.nombre == 'Proveedor' and current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
+            suppliers = [current_user.empleado_asociado.proveedor]
         else:
             mostrar_inactivos = request.args.get('mostrar_inactivos', False)
             if mostrar_inactivos and current_user.rol.nombre == 'Administrador':
@@ -149,8 +150,8 @@ def view_supplier(supplier_id):
     
     # Verificar permisos
     if (current_user.rol.nombre == 'Proveedor' and 
-        current_user.empleados and 
-        current_user.empleados.proveedor_id != supplier_id):
+        current_user.empleado_asociado and 
+        current_user.empleado_asociado.proveedor_id != supplier_id):
         flash('No tienes permisos para ver este proveedor', 'danger')
         return redirect(url_for('suppliers.list_suppliers'))
     
@@ -189,8 +190,8 @@ def list_orders():
     form = EmptyForm()
     
     # Determinar el supplier_id basado en el usuario actual
-    if current_user.rol.nombre == 'Proveedor' and current_user.empleados:
-        supplier_id = current_user.empleados.proveedor_id
+    if current_user.rol.nombre == 'Proveedor' and current_user.empleado_asociado:
+        supplier_id = current_user.empleado_asociado.proveedor_id
         proveedor = Supplier.query.get_or_404(supplier_id)
         orders = SupplierOrder.query.filter_by(proveedor_id=supplier_id).all()
     else:
@@ -293,8 +294,8 @@ def update_order_status(order_id):
     
     # Verificar permisos
     if (current_user.rol.nombre == 'Proveedor' and 
-        current_user.empleados and 
-        current_user.empleados.proveedor_id != orden.proveedor_id):
+        current_user.empleado_asociado and 
+        current_user.empleado_asociado.proveedor_id != orden.proveedor_id):
         flash('No tienes permisos para modificar esta orden', 'danger')
         return redirect(url_for('suppliers.list_orders'))
     
@@ -327,8 +328,8 @@ def view_order(order_id):
     
     # Verificar permisos
     if (current_user.rol.nombre == 'Proveedor' and 
-        current_user.empleados and 
-        current_user.empleados.proveedor_id != orden.proveedor_id):
+        current_user.empleado_asociado and 
+        current_user.empleado_asociado.proveedor_id != orden.proveedor_id):
         flash('No tienes permisos para ver esta orden', 'danger')
         return redirect(url_for('suppliers.list_orders'))
     

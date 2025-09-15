@@ -1,4 +1,5 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, current_app
+from app.utils.decorators import current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager

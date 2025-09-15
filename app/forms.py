@@ -166,7 +166,6 @@ class CiudadForm(FlaskForm):
     
     submit = SubmitField('Guardar')
     
-#-----------Venta--------------
 class SaleForm(FlaskForm):
     fecha = DateTimeField(
         'Fecha de la venta',
@@ -174,8 +173,7 @@ class SaleForm(FlaskForm):
         default=datetime.utcnow,
         validators=[DataRequired(message='La fecha de la venta es obligatoria')]
     )
-    
-    
+
     total = DecimalField(
         'Total',
         places=2,
@@ -184,30 +182,38 @@ class SaleForm(FlaskForm):
             NumberRange(min=0, message='El total debe ser mayor o igual a 0')
         ]
     )
-    
-    estado = SelectField('Estado', choices=['activa','anulada'], validators=[
-        Optional()
-    ])
-    
+
+    estado = SelectField(
+        'Estado',
+        choices=[('activa', 'Activa'), ('anulada', 'Anulada')], default='activa',  # 👈 corregido, debe ser lista de tuplas
+        validators=[Optional()]
+    )
+
     activo = BooleanField('Estado')
-    
+
     cliente_id = SelectField(
-        'Cliente', coerce = int,
-        validators=[DataRequired(message='Debe seleccionar un cliente')]
+        'Cliente',
+        coerce=int,
+        choices=[],   # 👈 importante
+        validators=[Optional()]
     )
-    
+
     empleado_id = SelectField(
-        'Empleado', coerce = int,
-        validators=[DataRequired(message='Debe seleccionar un empleado')]
+        'Empleado',
+        coerce=int,
+        choices=[],   # 👈 importante
+        validators=[Optional()]
     )
-    
+
     tienda_id = SelectField(
-        'Tienda', coerce = int,
-        validators=[DataRequired(message='Debe seleccionar una tienda')]
+        'Tienda',
+        coerce=int,
+        choices=[],   # 👈 importante
+        validators=[Optional()]
     )
-    
+
     submit = SubmitField('Guardar Venta')
-    
+
 #-----------Venta producto--------------
 class SaleProductForm(FlaskForm):
     id_venta = SelectField('Venta', coerce = int,
@@ -339,6 +345,13 @@ class SupplierOrderForm(FlaskForm):
     proveedor_id = SelectField('Proveedor', coerce=int, validators=[
         DataRequired(message="El proveedor es obligatorio")
     ])
+    
+    fecha = DateTimeField(
+        'Fecha de la Orden',
+        format='%Y-%m-%d',
+        default=datetime.utcnow,
+        validators=[DataRequired(message='Debe indicar la fecha de la orden')]
+    )
     
     estado = SelectField('Estado', choices=[
         ('pendiente', 'Pendiente'),

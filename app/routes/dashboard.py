@@ -4,6 +4,7 @@ from app.forms import DateRangeForm, SalesFilterForm, QuickStatsForm
 from app.utils.decorators import login_required, roles_required, current_user
 from app import db
 from datetime import datetime, timedelta
+from sqlalchemy.exc import SQLAlchemyError
 import json
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -14,7 +15,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def dashboard():
     """Panel de control principal con estadísticas adaptadas al rol del usuario"""
     try:
-        #Obtener fecha de hoy(sin hora)
+        # Obtener fecha de hoy (sin hora)
         today = datetime.utcnow().date()
         today_start = datetime(today.year, today.month, today.day)
         
@@ -23,63 +24,64 @@ def dashboard():
         # Estadísticas básicas para todos los roles
         stats = {
             'total_products': Product.get_activos().count(),
-            'total_sales_today': Sale.query.filter(
-                Sale.fecha >= today_start
-            ).count(),
+            'total_sales_today': Sale.query.filter(Sale.fecha >= today_start).count(),
             'total_clients': Client.get_activos().count(),
-        }
-        
-        stats.update({
             'store_sales_today': 0,
             'store_recent_sales': []
-        })
+        }
 
         # Estadísticas específicas según el rol
-        if current_user.rol.nombre == 'Administrador':
-            stats.update({
-                'total_stores': Store.get_activas().count(),
-                'total_staff': Staff.get_activos().count(),
-                'total_suppliers': Supplier.get_activos().count(),
-                'recent_sales': Sale.query.order_by(Sale.fecha.desc()).limit(10).all(),
-                'low_stock_products': Product.query.filter(
-                    Product.stock <= threshold
-                ).limit(1).all()
-            })
-        
-        elif current_user.rol.nombre == 'Vendedor':
-            # Obtener la tienda del vendedor (si está asociado a una)
-            user_store = None
-            if current_user.empleado_asociado and current_user.empleado_asociado.tienda:
-                user_store = current_user.empleado_asociado.tienda
+        try:
+            if current_user.rol.nombre == 'Administrador':
                 stats.update({
-                    'store_sales_today': Sale.query.filter(
-                        Sale.tienda_id == user_store.id_tienda,
-                        Sale.fecha >= datetime.utcnow().date()
-                    ).count(),
-                    'store_recent_sales': Sale.query.filter(
-                        Sale.tienda_id == user_store.id_tienda
-                    ).order_by(Sale.fecha.desc()).limit(10).all(),
+                    'total_stores': Store.get_activas().count(),
+                    'total_staff': Staff.get_activos().count(),
+                    'total_suppliers': Supplier.get_activos().count(),
+                    'recent_sales': Sale.query.order_by(Sale.fecha.desc()).limit(10).all(),
+                    'low_stock_products': Product.query.filter(Product.stock <= threshold).limit(5).all()
                 })
+            
+            elif current_user.rol.nombre == 'Vendedor':
+                # Obtener la tienda del vendedor (si está asociado a una)
+                if current_user.empleado_asociado and current_user.empleado_asociado.tienda:
+                    user_store = current_user.empleado_asociado.tienda
+                    stats.update({
+                        'store_sales_today': Sale.query.filter(
+                            Sale.tienda_id == user_store.id_tienda,
+                            Sale.fecha >= today_start
+                        ).count(),
+                        'store_recent_sales': Sale.query.filter(
+                            Sale.tienda_id == user_store.id_tienda
+                        ).order_by(Sale.fecha.desc()).limit(10).all(),
+                    })
+            
+            elif current_user.rol.nombre == 'Proveedor':
+                # Obtener el proveedor del usuario
+                if current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
+                    user_supplier = current_user.empleado_asociado.proveedor
+                    stats.update({
+                        'supplier_orders': user_supplier.ordenes.count() if hasattr(user_supplier, 'ordenes') else 0,
+                        'recent_orders': user_supplier.ordenes.order_by(
+                            db.desc('fecha_creacion')
+                        ).limit(5).all() if user_supplier else []
+                    })
+                
+        except AttributeError as e:
+            current_app.logger.error(f"Error de atributo en dashboard: {str(e)}")
+            flash('Error al cargar algunas estadísticas. Contacte al administrador.', 'warning')
+        except SQLAlchemyError as e:
+            current_app.logger.error(f"Error de base de datos en dashboard: {str(e)}")
+            flash('Error al acceder a la base de datos. Contacte al administrador.', 'danger')
         
-        elif current_user.rol.nombre == 'Proveedor':
-            # Obtener el proveedor del usuario
-            user_supplier = None
-            if current_user.empleados and current_user.empleados.proveedor:
-                user_supplier = current_user.empleados.proveedor
-                stats.update({
-                    'supplier_orders': user_supplier.ordenes_proveedor,
-                    'recent_orders': user_supplier.ordenes_proveedor.order_by(
-                        db.desc('fecha_creacion')
-                    ).limit(5).all() if user_supplier else []
-                })
-
         return render_template('admin/dashboard.html', stats=stats, current_user=current_user, low_stock_threshold=threshold)
     
     except Exception as e:
+        current_app.logger.error(f"Error inesperado en dashboard: {str(e)}")
         # En caso de error, mostrar un dashboard básico
         return render_template('admin/dashboard.html', 
-                             stats={'error': str(e)},
-                             current_user=current_user, low_stock_threshold=2)
+                             stats={'error': 'Error al cargar el dashboard'},
+                             current_user=current_user, 
+                             low_stock_threshold=2)
 
 @dashboard_bp.route('/sales-data', methods=['GET', 'POST'])
 @login_required
@@ -250,13 +252,13 @@ def quick_stats():
                 }
             
             # Estadísticas para proveedores
-            elif current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
+            elif current_user.rol.nombre == 'Proveedor' and current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
                 stats = {
-                    'total_orders': current_user.empleados.proveedor.ordenes_proveedor.count(),
-                    'pending_orders': current_user.empleados.proveedor.ordenes_proveedor.filter_by(
+                    'total_orders': current_user.empleado_asociado.proveedor.ordenes_proveedor.count(),
+                    'pending_orders': current_user.empleado_asociado.proveedor.ordenes_proveedor.filter_by(
                         estado='pendiente'
                     ).count(),
-                    'completed_orders': current_user.empleados.proveedor.ordenes_proveedor.filter_by(
+                    'completed_orders': current_user.empleado_asociado.proveedor.ordenes_proveedor.filter_by(
                         estado='completada'
                     ).count()
                 }
@@ -356,9 +358,9 @@ def recent_activity():
                 })
         
         # Actividad reciente para proveedores
-        elif current_user.rol.nombre == 'Proveedor' and current_user.empleados and current_user.empleados.proveedor:
+        elif current_user.rol.nombre == 'Proveedor' and current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
             # Órdenes recientes
-            recent_orders = current_user.empleados.proveedor.ordenes_proveedor.filter(
+            recent_orders = current_user.empleado_asociado.proveedor.ordenes_proveedor.filter(
                 SupplierOrder.fecha_creacion >= start_date,
                 SupplierOrder.fecha_creacion <= end_date
             ).order_by(

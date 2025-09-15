@@ -20,7 +20,7 @@
                                 {{ form.cliente_id.label(class="form-label") }}
                                 {{ form.cliente_id(class="form-select", id="cliente_id") }}
                                 {% for error in form.cliente_id.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
+                                <div class="text-danger small">{{ error }}</div>
                                 {% endfor %}
                             </div>
                         </div>
@@ -33,11 +33,10 @@
                                     <select class="form-select producto-select" required>
                                         <option value="">Seleccionar producto</option>
                                         {% for producto in productos %}
-                                            <option value="{{ producto.id_producto }}" 
-                                                    data-precio="{{ producto.precio }}" 
-                                                    data-stock="{{ producto.stock }}">
-                                                {{ producto.nombre }} - ${{ producto.precio }} (Stock: {{ producto.stock }})
-                                            </option>
+                                        <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio }}"
+                                            data-stock="{{ producto.stock }}">
+                                            {{ producto.nombre }} - ${{ producto.precio }} (Stock: {{ producto.stock }})
+                                        </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -48,7 +47,8 @@
                                     <input type="text" class="form-control precio-input" readonly>
                                 </div>
                                 <div class="col-md-2">
-                                    <input type="text" class="form-control subtotal-input" readonly placeholder="Subtotal">
+                                    <input type="text" class="form-control subtotal-input" readonly
+                                        placeholder="Subtotal">
                                 </div>
                                 <div class="col-md-1">
                                     <button type="button" class="btn btn-danger remove-product">X</button>
@@ -68,6 +68,10 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Campo oculto que llenaremos con JS -->
+                        <input type="hidden" id="total-hidden" name="total">
+
 
                         <!-- Botones -->
                         <div class="mt-4">
@@ -91,74 +95,74 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function calcularTotales() {
-        let total = 0;
-        document.querySelectorAll('.producto-row').forEach(row => {
-            const select = row.querySelector('.producto-select');
-            const cantidadInput = row.querySelector('.cantidad-input');
-            const precioInput = row.querySelector('.precio-input');
-            const subtotalInput = row.querySelector('.subtotal-input');
-            
-            if (select.value && cantidadInput.value) {
-                const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
-                const cantidad = parseInt(cantidadInput.value);
-                const subtotal = precio * cantidad;
-                
-                precioInput.value = precio.toFixed(2);
-                subtotalInput.value = subtotal.toFixed(2);
-                total += subtotal;
-            } else {
-                precioInput.value = '';
-                subtotalInput.value = '';
-            }
-        });
-        document.getElementById('total-venta').textContent = total.toFixed(2);
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        function calcularTotales() {
+            let total = 0;
+            document.querySelectorAll('.producto-row').forEach(row => {
+                const select = row.querySelector('.producto-select');
+                const cantidadInput = row.querySelector('.cantidad-input');
+                const precioInput = row.querySelector('.precio-input');
+                const subtotalInput = row.querySelector('.subtotal-input');
 
-    // Añadir producto
-    document.getElementById('add-product').addEventListener('click', function() {
-        const newRow = document.querySelector('.producto-row').cloneNode(true);
-        newRow.querySelector('.producto-select').value = '';
-        newRow.querySelector('.cantidad-input').value = 1;
-        newRow.querySelector('.precio-input').value = '';
-        newRow.querySelector('.subtotal-input').value = '';
-        newRow.querySelector('.remove-product').addEventListener('click', function() {
-            this.closest('.producto-row').remove();
-            calcularTotales();
-        });
-        
-        document.getElementById('productos-container').appendChild(newRow);
-        
-        newRow.querySelector('.producto-select').addEventListener('change', calcularTotales);
-        newRow.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
-    });
+                if (select.value && cantidadInput.value) {
+                    const precio = parseFloat(select.options[select.selectedIndex].dataset.precio);
+                    const cantidad = parseInt(cantidadInput.value);
+                    const subtotal = precio * cantidad;
 
-    // Inicializar eventos en el primer producto
-    document.querySelector('.producto-select').addEventListener('change', calcularTotales);
-    document.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
-    document.querySelector('.remove-product').addEventListener('click', function() {
-        if (document.querySelectorAll('.producto-row').length > 1) {
-            this.closest('.producto-row').remove();
-            calcularTotales();
+                    precioInput.value = precio.toFixed(2);
+                    subtotalInput.value = subtotal.toFixed(2);
+                    total += subtotal;
+                } else {
+                    precioInput.value = '';
+                    subtotalInput.value = '';
+                }
+            });
+            document.getElementById('total-venta').textContent = total.toFixed(2);
         }
-    });
 
-    // Antes de enviar el formulario, construimos el JSON de productos
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const productos = [];
-        document.querySelectorAll('.producto-row').forEach(row => {
-            const select = row.querySelector('.producto-select');
-            const cantidadInput = row.querySelector('.cantidad-input');
-            if (select.value && cantidadInput.value) {
-                productos.push({
-                    producto_id: parseInt(select.value),
-                    cantidad: parseInt(cantidadInput.value)
-                });
+        // Añadir producto
+        document.getElementById('add-product').addEventListener('click', function () {
+            const newRow = document.querySelector('.producto-row').cloneNode(true);
+            newRow.querySelector('.producto-select').value = '';
+            newRow.querySelector('.cantidad-input').value = 1;
+            newRow.querySelector('.precio-input').value = '';
+            newRow.querySelector('.subtotal-input').value = '';
+            newRow.querySelector('.remove-product').addEventListener('click', function () {
+                this.closest('.producto-row').remove();
+                calcularTotales();
+            });
+
+            document.getElementById('productos-container').appendChild(newRow);
+
+            newRow.querySelector('.producto-select').addEventListener('change', calcularTotales);
+            newRow.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
+        });
+
+        // Inicializar eventos en el primer producto
+        document.querySelector('.producto-select').addEventListener('change', calcularTotales);
+        document.querySelector('.cantidad-input').addEventListener('input', calcularTotales);
+        document.querySelector('.remove-product').addEventListener('click', function () {
+            if (document.querySelectorAll('.producto-row').length > 1) {
+                this.closest('.producto-row').remove();
+                calcularTotales();
             }
         });
-        document.getElementById('productos-json').value = JSON.stringify(productos);
+
+        // Antes de enviar el formulario, construimos el JSON de productos
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const productos = [];
+            document.querySelectorAll('.producto-row').forEach(row => {
+                const select = row.querySelector('.producto-select');
+                const cantidadInput = row.querySelector('.cantidad-input');
+                if (select.value && cantidadInput.value) {
+                    productos.push({
+                        producto_id: parseInt(select.value),
+                        cantidad: parseInt(cantidadInput.value)
+                    });
+                }
+            });
+            document.getElementById('productos-json').value = JSON.stringify(productos);
+        });
     });
-});
 </script>
 {% endblock %}

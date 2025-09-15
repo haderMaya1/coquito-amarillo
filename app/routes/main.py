@@ -12,11 +12,11 @@ def index():
         elif current_user.rol.nombre == 'Vendedor':
             return redirect(url_for('dashboard.dashboard'))
         elif current_user.rol.nombre == 'Proveedor':
-            if current_user.empleados and current_user.empleados.proveedor:
-                return redirect(url_for('suppliers.view_supplier', supplier_id=current_user.empleados.proveedor_id))
+            if current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
+                return redirect(url_for('suppliers.view_supplier', supplier_id=current_user.empleado_asociado.proveedor_id))
             else:
                 flash('Usuario proveedor no tiene empleado asociado', 'danger')
-                return redirect(url_for('auth.logout'))
+                return redirect(url_for('dashboard.dashboard'))
     return render_template('main/index.html')
 
 @main_bp.route('/unauthorized')

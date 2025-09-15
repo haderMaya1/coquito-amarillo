@@ -52,7 +52,7 @@
                   <form method="POST"
                         action="{{ url_for('suppliers.update_order_status', order_id=orden.id_orden_proveedor) }}"
                         class="d-inline">
-                    {{ update_form.hidden_tag() }}
+                    {{ form.hidden_tag() }}
                     <input type="hidden" name="estado" value="recibida">
                     <button type="submit" class="btn btn-sm btn-success"
                             onclick="return confirm('¿Marcar esta orden como recibida?')">
@@ -64,7 +64,7 @@
                   <form method="POST"
                         action="{{ url_for('suppliers.update_order_status', order_id=orden.id_orden_proveedor) }}"
                         class="d-inline">
-                    {{ update_form.hidden_tag() }}
+                    {{ form.hidden_tag() }}
                     <input type="hidden" name="estado" value="cancelada">
                     <button type="submit" class="btn btn-sm btn-danger"
                             onclick="return confirm('¿Cancelar esta orden?')">

@@ -50,17 +50,23 @@ def list_sales():
     return render_template('sales/list.html', ventas=ventas, clientes=clientes, vendedores=vendedores)
 
 
-# --------- Crear venta ---------
 @sales_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @seller_required
 def create_sale():
     form = SaleForm()
 
+    # cargar clientes y productos
+    clientes = Client.get_activos().all()
+    productos = Product.get_activos().filter(Product.stock > 0).all()
+
+    # asignar choices al campo del formulario
+    form.cliente_id.choices = [(c.id_cliente, c.nombre) for c in clientes]
+
     if form.validate_on_submit():
         try:
             cliente_id = form.cliente_id.data
-            productos_data = json.loads(request.form.get('productos', '[]'))  # esperado como lista de dicts desde el formulario
+            productos_data = json.loads(request.form.get('productos', '[]'))
 
             if not cliente_id or not productos_data:
                 flash('Debes seleccionar un cliente y al menos un producto', 'danger')
@@ -72,7 +78,7 @@ def create_sale():
                 return redirect(url_for('sales.create_sale'))
 
             nueva_venta = Sale(
-                cliente_id =cliente_id,
+                cliente_id=cliente_id,
                 empleado_id=empleado.id_empleado,
                 tienda_id=empleado.tienda_id,
                 total=0
@@ -81,7 +87,7 @@ def create_sale():
             db.session.flush()  # genera id_venta
 
             total_venta = 0
-            for item in productos:
+            for item in productos_data:
                 producto_id = item.get('producto_id')
                 cantidad = int(item.get('cantidad', 1))
 
@@ -121,9 +127,9 @@ def create_sale():
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear venta: {str(e)}', 'danger')
+    else:
+        print('Errores de validación', form.errors)
 
-    clientes = Client.get_activos().all()
-    productos = Product.get_activos().filter(Product.stock > 0).all()
     return render_template('sales/create.html', form=form, clientes=clientes, productos=productos)
 
 @sales_bp.route('/<int:sale_id>/add_product', methods=['GET', 'POST'])
