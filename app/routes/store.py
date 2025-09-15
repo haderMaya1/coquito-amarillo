@@ -24,7 +24,7 @@ def list_stores():
     delete_form = ConfirmDeleteForm()
     activate_form = ConfirmDeleteForm()
     
-    return render_template('stores/list.html', stores=stores, mostrar_inactivas=mostrar_inactivas, activate_form=activate_form, delete_form=delete_form)
+    return render_template('store/list.html', stores=stores, mostrar_inactivas=mostrar_inactivas, activate_form=activate_form, delete_form=delete_form)
 
 @store_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -53,7 +53,7 @@ def create_store():
             db.session.rollback()
             flash(f'Error al crear tienda: {str(e)}', 'error')
     
-    return render_template('stores/create.html', form=form)
+    return render_template('store/create.html', form=form)
 
 @store_bp.route('/<int:store_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -79,7 +79,7 @@ def edit_store(store_id):
             db.session.rollback()
             flash(f'Error al actualizar tienda: {str(e)}', 'error')
     
-    return render_template('stores/edit.html', form=form, tienda=tienda)
+    return render_template('store/edit.html', form=form, tienda=tienda)
 
 @store_bp.route('/<int:store_id>/delete', methods=['POST'])
 @login_required
@@ -127,4 +127,4 @@ def view_store(store_id):
     delete_form = ConfirmDeleteForm()
     activate_form = ConfirmDeleteForm()
     
-    return render_template('stores/detail.html', tienda=tienda, personal_activo=personal_activo, delete_form=delete_form, activate_form=activate_form)
+    return render_template('store/detail.html', tienda=tienda, personal_activo=personal_activo, delete_form=delete_form, activate_form=activate_form)

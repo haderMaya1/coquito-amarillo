@@ -1,196 +1,194 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-black">
-        <i class="bi bi-speedometer2 text-black"></i> Bienvenido {{ current_user.nombre }}
-        <small class="text-muted">({{ current_user.rol.nombre }})</small>
+<div class="container mt-4 text-black">
+    <h2 class="mb-4">
+        <i class="bi bi-speedometer2"></i>
+        Bienvenido {{ current_user.nombre }} ({{ current_user.rol.nombre }})
     </h2>
 
-    {% if stats.get('error') %}
-    <div class="alert alert-danger">
-        Ocurrió un error al cargar estadísticas: {{ stats.get('error') }}
-    </div>
-    {% else %}
-
-    <!-- ===============================
-             ADMINISTRADOR
-        ================================ -->
-    {% if current_user.rol.nombre == 'Administrador' %}
-    <div class="row">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Productos</h6>
+    <!-- ================= ADMINISTRADOR ================= -->
+    {% if current_user.rol.nombre == "Administrador" %}
+    <div class="row g-4 text-black">
+        <div class="col-md-2">
+            <div class="card text-center bg-primary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Productos</h5>
                     <p class="display-6">{{ stats.total_products }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3 text-black">
-            <div class="card bg-success text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Ventas Hoy</h6>
+        <div class="col-md-2">
+            <div class="card text-center bg-success text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Ventas Hoy</h5>
                     <p class="display-6">{{ stats.total_sales_today }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3 text-black">
-            <div class="card bg-info text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Clientes</h6>
+        <div class="col-md-2">
+            <div class="card text-center bg-info text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Clientes</h5>
                     <p class="display-6">{{ stats.total_clients }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3 text-black">
-            <div class="card bg-warning text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Tiendas</h6>
+        <div class="col-md-2">
+            <div class="card text-center bg-warning text-dark shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Tiendas</h5>
                     <p class="display-6">{{ stats.total_stores }}</p>
                 </div>
             </div>
         </div>
+        <div class="col-md-2">
+            <div class="card text-center bg-secondary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Empleados</h5>
+                    <p class="display-6">{{ stats.total_staff }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center bg-dark text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Proveedores</h5>
+                    <p class="display-6">{{ stats.total_suppliers }}</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {% if stats.low_stock_products %}
-    <h4 class="mt-5"><i class="bi bi-exclamation-triangle-fill text-danger"></i>Stock Productos</h4>
-    <table class="table table-hover mt-3 text-black">
-        <thead class="table-danger">
-            <tr>
-                <th>Producto</th>
-                <th>Stock</th>
-                <th>Umbral (≤ {{ low_stock_threshold }})</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in stats.low_stock_products %}
-            <tr>
-                <td>{{ product.nombre }}</td>
-                <td>{{ product.stock }}</td>
-                <td>{{ low_stock_threshold }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="alert alert-success mt-3">
-        ✅ No hay productos con bajo stock (≤ {{ low_stock_threshold }}).
+    <!-- Ventas recientes -->
+    <h4 class="mt-5"><i class="bi bi-receipt"></i> Ventas recientes</h4>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in stats.recent_sales %}
+                <tr>
+                    <td>#{{ venta.id_venta }}</td>
+                    <td>{{ venta.cliente.nombre }}</td>
+                    <td>${{ "%.2f"|format(venta.total) }}</td>
+                    <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">No hay ventas recientes</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Productos con bajo stock -->
+    <h4 class="mt-5"><i class="bi bi-exclamation-triangle"></i> Productos con bajo stock</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Nombre</th><th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in stats.low_stock_products %}
+                <tr class="table-warning">
+                    <td>{{ product.id_producto }}</td>
+                    <td>{{ product.nombre }}</td>
+                    <td>{{ product.stock }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center">Todos los productos tienen stock suficiente</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     {% endif %}
 
-    {% if stats.recent_sales %}
-    <h4 class="mt-5 text-black"><i class="bi bi-cash-coin"></i> Ventas recientes</h4>
-    <table class="table table-striped mt-3">
-        <thead class="table-light">
-            <tr>
-                <th>ID Venta</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sale in stats.recent_sales %}
-            <tr>
-                <td>#{{ sale.id_venta }}</td>
-                <td>{{ sale.cliente.nombre if sale.cliente else "N/A" }}</td>
-                <td>${{ "%.2f"|format(sale.total) }}</td>
-                <td>{{ sale.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-    {% endif %}
-
-    <!-- ===============================
-             VENDEDOR
-        ================================ -->
-    {% if current_user.rol.nombre == 'Vendedor' %}
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-success text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Ventas Hoy (Tienda)</h6>
+    <!-- ================= VENDEDOR ================= -->
+    {% if current_user.rol.nombre == "Vendedor" %}
+    <div class="row g-4 text-black">
+        <div class="col-md-4">
+            <div class="card text-center bg-success text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Ventas Hoy en mi Tienda</h5>
                     <p class="display-6">{{ stats.store_sales_today }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-primary text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Total Clientes</h6>
+        <div class="col-md-4">
+            <div class="card text-center bg-info text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Clientes en mi Tienda</h5>
                     <p class="display-6">{{ stats.total_clients }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {% if stats.store_recent_sales %}
-    <h4 class="mt-5"><i class="bi bi-cash"></i> Ventas recientes de tu tienda</h4>
-    <table class="table table-striped mt-3">
-        <thead class="table-light">
-            <tr>
-                <th>ID Venta</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sale in stats.store_recent_sales %}
-            <tr>
-                <td>#{{ sale.id_venta }}</td>
-                <td>{{ sale.cliente.nombre if sale.cliente else "N/A" }}</td>
-                <td>${{ "%.2f"|format(sale.total) }}</td>
-                <td>{{ sale.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+    <h4 class="mt-5"><i class="bi bi-receipt"></i> Ventas recientes en mi Tienda</h4>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>ID Venta</th><th>Cliente</th><th>Total</th><th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in stats.store_recent_sales %}
+                <tr>
+                    <td>#{{ venta.id_venta }}</td>
+                    <td>{{ venta.cliente.nombre }}</td>
+                    <td>${{ "%.2f"|format(venta.total) }}</td>
+                    <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">No hay ventas recientes en tu tienda</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
-    <!-- ===============================
-             PROVEEDOR
-        ================================ -->
-    {% if current_user.rol.nombre == 'Proveedor' %}
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-info text-white shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h6>Total Órdenes</h6>
-                    <p class="display-6">{{ stats.supplier_orders|length }}</p>
+    <!-- ================= PROVEEDOR ================= -->
+    {% if current_user.rol.nombre == "Proveedor" %}
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card text-center bg-primary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Órdenes como Proveedor</h5>
+                    <p class="display-6">{{ stats.supplier_orders|length if stats.supplier_orders else 0 }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {% if stats.recent_orders %}
-    <h4 class="mt-5"><i class="bi bi-truck"></i> Órdenes recientes</h4>
-    <table class="table table-striped mt-3">
-        <thead class="table-light">
-            <tr>
-                <th>ID Orden</th>
-                <th>Estado</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in stats.recent_orders %}
-            <tr>
-                <td>#{{ order.id_orden_proveedor }}</td>
-                <td>{{ order.estado }}</td>
-                <td>{{ order.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-    {% endif %}
-
+    <h4 class="mt-5"><i class="bi bi-box-seam"></i> Órdenes recientes</h4>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr><th>ID Orden</th><th>Fecha</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+                {% for orden in stats.recent_orders %}
+                <tr>
+                    <td>#{{ orden.id_orden_proveedor }}</td>
+                    <td>{{ orden.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ orden.estado }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center">No hay órdenes recientes</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

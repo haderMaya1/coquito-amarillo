@@ -3,7 +3,7 @@
 {% block title %}Detalle de Tienda{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center text-black">
   <div class="col-md-10">
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -91,8 +91,8 @@
               <tr>
                 <td>{{ empleado.id_empleado }}</td>
                 <td>{{ empleado.nombre }}</td>
-                <td>{{ empleado.rol.nombre if empleado.rol else 'N/A' }}</td>
-                <td>{{ empleado.telefono if empleado.telefono else '—' }}</td>
+                <td>{{ empleado.usuario.rol.nombre if empleado.usuario and empleado.usuario.rol else 'N/A' }}</td>
+                <td>{{ empleado.usuario.email if empleado.usuario.email else '—' }}</td>
               </tr>
               {% endfor %}
             </tbody>

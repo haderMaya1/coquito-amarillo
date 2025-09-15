@@ -27,7 +27,12 @@ def dashboard():
             'total_sales_today': Sale.query.filter(Sale.fecha >= today_start).count(),
             'total_clients': Client.get_activos().count(),
             'store_sales_today': 0,
-            'store_recent_sales': []
+            'store_recent_sales': [], 
+            'total_stores': Store.query.count(),
+            'total_staff': Staff.query.count(),
+            'total_suppliers': Supplier.query.count(),
+            'low_stock_products': Product.query.filter(Product.stock <= 5, Product.activo == 1).all(),
+            'recent_sales': Sale.query.order_by(Sale.fecha.desc()).limit(5).all()
         }
 
         # Estadísticas específicas según el rol
@@ -53,6 +58,9 @@ def dashboard():
                         'store_recent_sales': Sale.query.filter(
                             Sale.tienda_id == user_store.id_tienda
                         ).order_by(Sale.fecha.desc()).limit(10).all(),
+                        'total_clients': Client.query.filter(
+                            Client.tienda_id == user_store.id_tienda
+                        ).count()
                     })
             
             elif current_user.rol.nombre == 'Proveedor':
@@ -60,22 +68,25 @@ def dashboard():
                 if current_user.empleado_asociado and current_user.empleado_asociado.proveedor:
                     user_supplier = current_user.empleado_asociado.proveedor
                     stats.update({
-                        'supplier_orders': user_supplier.ordenes.count() if hasattr(user_supplier, 'ordenes') else 0,
-                        'recent_orders': user_supplier.ordenes.order_by(
-                            db.desc('fecha_creacion')
-                        ).limit(5).all() if user_supplier else []
+                        'supplier_orders': user_supplier.ordenes_proveedor,  
+                        'recent_orders': user_supplier.ordenes_proveedor.order_by(
+                            SupplierOrder.fecha_creacion.desc()
+                        ).limit(5).all()
                     })
                 
         except AttributeError as e:
+            current_app.logger.debug(f"Stats generadas para {current_user.rol.nombre}: {stats}")
             current_app.logger.error(f"Error de atributo en dashboard: {str(e)}")
             flash('Error al cargar algunas estadísticas. Contacte al administrador.', 'warning')
         except SQLAlchemyError as e:
+            current_app.logger.debug(f"Stats generadas para {current_user.rol.nombre}: {stats}")
             current_app.logger.error(f"Error de base de datos en dashboard: {str(e)}")
             flash('Error al acceder a la base de datos. Contacte al administrador.', 'danger')
         
         return render_template('admin/dashboard.html', stats=stats, current_user=current_user, low_stock_threshold=threshold)
     
     except Exception as e:
+        current_app.logger.debug(f"Stats generadas para {current_user.rol.nombre}: {stats}")
         current_app.logger.error(f"Error inesperado en dashboard: {str(e)}")
         # En caso de error, mostrar un dashboard básico
         return render_template('admin/dashboard.html', 
